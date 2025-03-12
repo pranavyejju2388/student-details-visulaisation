@@ -1,33 +1,231 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { FaChartPie, FaSignOutAlt } from "react-icons/fa";
-import PlacementData from "./PlacementData";
-const Sidebar = () => {
+
+import { useState } from "react";
+import { NavLink } from "react-router-dom";
+import { 
+  Home, 
+  PieChart, 
+  Calendar, 
+  FileBarChart, 
+  FileText, 
+  LogOut, 
+  X, 
+  UserPlus, 
+  Code, 
+  Music, 
+  Trophy, 
+  UsersRound 
+} from "lucide-react";
+import { cn } from "../lib/utils";
+import { Button } from "../components/ui/button";
+
+const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
   return (
-    <div className="w-64 h-screen bg-white shadow-md p-4">
-      <h2 className="text-xl font-bold mb-6 text-blue-700">Student Details System</h2>
-      <ul>
-        <li className="mb-3">
-          <Link to="/dashboard" className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100">
-            <FaChartPie /> Dashboard
-          </Link>
-        </li>
-        <li className="mb-3">
-          <Link to="/placement-data" className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100">
-            Placement Data
-          </Link>
-        </li>
-        
-        <li className="mb-3">
-          <Link to="/" className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100">
-            Technical Events 
-          </Link>
-        </li>
-      </ul>
-      <button className="absolute bottom-4 flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-md">
-        <FaSignOutAlt /> Logout
-      </button>
-    </div>
+    <>
+      {/* Mobile menu overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <aside 
+        id="sidebar"
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-border shadow-sm transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0",
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between px-6 py-4 border-b">
+            <h2 className="text-xl font-semibold text-primary">Student Details System</h2>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="lg:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          
+          <nav className="flex-1 overflow-y-auto py-4 px-3">
+            <div className="text-xs uppercase font-semibold text-muted-foreground tracking-wider px-3 mb-2">
+              Main Navigation
+            </div>
+            <ul className="space-y-1.5 mb-6">
+              <li>
+                <NavLink
+                  to="/dashboard"
+                  className={({ isActive }) => cn(
+                    "nav-link",
+                    isActive && "active"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Home className="w-5 h-5" />
+                  <span>Dashboard</span>
+                </NavLink>
+              </li>
+            </ul>
+            
+            <div className="text-xs uppercase font-semibold text-muted-foreground tracking-wider px-3 mb-2">
+              Student Activities
+            </div>
+            <ul className="space-y-1.5 mb-6">
+              <li>
+                <NavLink
+                  to="/technical-events"
+                  className={({ isActive }) => cn(
+                    "nav-link",
+                    isActive && "active"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Code className="w-5 h-5" />
+                  <span>Technical Events</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/cultural-events"
+                  className={({ isActive }) => cn(
+                    "nav-link",
+                    isActive && "active"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Music className="w-5 h-5" />
+                  <span>Cultural Events</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/sports-events"
+                  className={({ isActive }) => cn(
+                    "nav-link",
+                    isActive && "active"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Trophy className="w-5 h-5" />
+                  <span>Sports Events</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/clubs-and-societies"
+                  className={({ isActive }) => cn(
+                    "nav-link",
+                    isActive && "active"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <UsersRound className="w-5 h-5" />
+                  <span>Clubs & Societies</span>
+                </NavLink>
+              </li>
+            </ul>
+            
+            <div className="text-xs uppercase font-semibold text-muted-foreground tracking-wider px-3 mb-2">
+              Data & Reports
+            </div>
+            <ul className="space-y-1.5">
+              <li>
+                <NavLink
+                  to="/placement-data"
+                  className={({ isActive }) => cn(
+                    "nav-link",
+                    isActive && "active"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <PieChart className="w-5 h-5" />
+                  <span>Placement Data</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/events-data"
+                  className={({ isActive }) => cn(
+                    "nav-link",
+                    isActive && "active"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Calendar className="w-5 h-5" />
+                  <span>Events Data</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/placement-results"
+                  className={({ isActive }) => cn(
+                    "nav-link",
+                    isActive && "active"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <FileBarChart className="w-5 h-5" />
+                  <span>Placement Results</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/event-results"
+                  className={({ isActive }) => cn(
+                    "nav-link",
+                    isActive && "active"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <FileBarChart className="w-5 h-5" />
+                  <span>Event Results</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/society-membership"
+                  className={({ isActive }) => cn(
+                    "nav-link",
+                    isActive && "active"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <UserPlus className="w-5 h-5" />
+                  <span>Society Membership</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/placement-report"
+                  className={({ isActive }) => cn(
+                    "nav-link",
+                    isActive && "active"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <FileText className="w-5 h-5" />
+                  <span>Placement Report</span>
+                </NavLink>
+              </li>
+            </ul>
+          </nav>
+          
+          <div className="mt-auto p-4 border-t">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-muted-foreground hover:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 };
 
