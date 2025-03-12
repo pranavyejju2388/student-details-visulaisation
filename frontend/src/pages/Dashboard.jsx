@@ -1,6 +1,17 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Users, BriefcaseBusiness, UserPlus, GraduationCap, FileText, ExternalLink, Code, Music, Trophy, UsersRound } from "lucide-react";
+import { 
+  Users, 
+  BriefcaseBusiness, 
+  FileText, 
+  ExternalLink, 
+  Code, 
+  Music, 
+  Trophy, 
+  UsersRound,
+  ChevronDown,
+  RefreshCw
+} from "lucide-react";
 import { 
   BarChart, 
   Bar, 
@@ -17,10 +28,8 @@ import {
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import StatCard from "../components/StatCard";
-import FilterSection from "../components/FilterSection";
 import { 
   placementStats, 
-  eventStats, 
   technicalEvents, 
   culturalEvents, 
   sportsEvents, 
@@ -35,12 +44,22 @@ const Dashboard = () => {
     company: "all",
     eventType: "all"
   });
-  
+
   const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'];
-  
+
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
     // In a real app, we would fetch data based on filters
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      department: "all",
+      fromYear: "all",
+      toYear: "all",
+      company: "all",
+      eventType: "all"
+    });
   };
 
   // Calculate totals for each category
@@ -48,7 +67,7 @@ const Dashboard = () => {
   const totalCulturalEvents = culturalEvents.length;
   const totalSportsEvents = sportsEvents.length;
   const totalClubMemberships = clubMemberships.length;
-  
+
   // Student activity category data for chart
   const activityCategoryData = [
     { name: "Technical", value: totalTechnicalEvents },
@@ -56,7 +75,12 @@ const Dashboard = () => {
     { name: "Sports", value: totalSportsEvents },
     { name: "Clubs", value: totalClubMemberships },
   ];
-  
+
+  // Departments, years, and companies data
+  const departments = ["CSE", "ECE", "MECH", "EEE", "CHEM", "CIVIL"];
+  const years = Array.from({ length: 11 }, (_, i) => 2025 - i); // 2025 to 2015
+  const companies = ["Salesforce", "DE Shaw", "Wells Fargo", "Oracle", "Google", "Microsoft"];
+
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       {/* Header Section */}
@@ -69,10 +93,98 @@ const Dashboard = () => {
           </Link>
         </Button>
       </div>
-      
-      {/* Filter Section */}
-      <FilterSection onFilterChange={handleFilterChange} />
-      
+
+      {/* Filters Section */}
+      <Card className="shadow-sm">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {/* Department Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Department</label>
+              <div className="relative">
+                <select
+                  className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  value={filters.department}
+                  onChange={(e) => handleFilterChange({ ...filters, department: e.target.value })}
+                >
+                  <option value="all">All Departments</option>
+                  {departments.map((dept) => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* From Year Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">From Year</label>
+              <div className="relative">
+                <select
+                  className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  value={filters.fromYear}
+                  onChange={(e) => handleFilterChange({ ...filters, fromYear: e.target.value })}
+                >
+                  <option value="all">All Years</option>
+                  {years.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* To Year Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">To Year</label>
+              <div className="relative">
+                <select
+                  className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  value={filters.toYear}
+                  onChange={(e) => handleFilterChange({ ...filters, toYear: e.target.value })}
+                >
+                  <option value="all">All Years</option>
+                  {years.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Company Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Company</label>
+              <div className="relative">
+                <select
+                  className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  value={filters.company}
+                  onChange={(e) => handleFilterChange({ ...filters, company: e.target.value })}
+                >
+                  <option value="all">All Companies</option>
+                  {companies.map((company) => (
+                    <option key={company} value={company}>{company}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Reset Filters Button */}
+            <div className="flex items-end">
+              <Button
+                variant="outline"
+                className="w-full bg-white hover:bg-gray-100"
+                onClick={resetFilters}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Reset Filters
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Stat Cards Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard 
@@ -271,4 +383,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;
