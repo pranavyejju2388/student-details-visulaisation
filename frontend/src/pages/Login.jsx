@@ -16,8 +16,8 @@ const Login = () => {
 
   // Mock user data
   const users = [
-    { email: "faculty@school.edu", password: "password", role: "faculty" },
-    { email: "admin@school.edu", password: "password", role: "admin" },
+    { email: "faculty@nitc.edu", password: "password", role: "faculty" },
+    { email: "admin@nitc.edu", password: "password", role: "admin" },
   ];
 
   const handleLogin = (e) => {
