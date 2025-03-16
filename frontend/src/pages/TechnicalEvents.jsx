@@ -1,3 +1,4 @@
+import { useState } from "react"; 
 import { Bar, PieChart, Pie, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
 import { ChevronDown, RefreshCw } from "lucide-react";
 
@@ -30,6 +31,8 @@ const TechnicalEvents = () => {
   const departments = ["CSE", "ECE", "MECH", "EEE", "CHEM", "CIVIL"];
   const years = Array.from({ length: 11 }, (_, i) => 2025 - i); // 2025 to 2015
   const eventTypes = ["Hackathons", "Workshops", "Competitions", "Technical Fest Tathva", "Other Technical Events"];
+  const [selectedYearFrom, setSelectedYearFrom] = useState("all");
+  const [selectedYearTo, setSelectedYearTo] = useState("all");
 
   return (
     <div className="p-6">
@@ -52,20 +55,39 @@ const TechnicalEvents = () => {
             </div>
           </div>
 
-          {/* Year Filter */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Year</label>
-            <div className="relative">
-              <select className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30">
-                <option value="all">All Years</option>
-                {years.map((year) => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
+        {/* Year Range Filter */}
+        <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Year Range</label>
+            <div className="grid grid-cols-2 gap-2">
+              {/* From Year */}
+              <div className="relative">
+                <select
+                  value={selectedYearFrom}
+                  onChange={(e) => setSelectedYearFrom(e.target.value)}
+                  className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                >
+                  <option value="all">From</option>
+                  {years.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* To Year */}
+              <div className="relative">
+                <select
+                  value={selectedYearTo}
+                  onChange={(e) => setSelectedYearTo(e.target.value)}
+                  className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                >
+                  <option value="all">To</option>
+                  {years.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
-
           {/* Event Type Filter */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Event Type</label>
