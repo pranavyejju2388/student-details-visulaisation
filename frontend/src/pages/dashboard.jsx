@@ -1,190 +1,274 @@
-import React from 'react';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { Users, BriefcaseBusiness, UserPlus, GraduationCap, FileText, ExternalLink, Code, Music, Trophy, UsersRound } from "lucide-react";
+import { 
+  BarChart, 
+  Bar, 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend 
+} from "recharts";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import StatCard from "../components/StatCard";
+import FilterSection from "../components/FilterSection";
+import { 
+  placementStats, 
+  eventStats, 
+  technicalEvents, 
+  culturalEvents, 
+  sportsEvents, 
+  clubMemberships 
+} from "../utils/data";
 
 const Dashboard = () => {
-    // Inline styles
-    const styles = {
-        container: {
-            maxWidth: '1200px',
-            margin: '0 auto',
-            padding: '20px',
-            fontFamily: 'Arial, sans-serif',
-            backgroundColor: '#f4f4f4',
-        },
-        section: {
-            backgroundColor: '#fff',
-            marginBottom: '20px',
-            padding: '20px',
-            borderRadius: '8px',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-        },
-        heading: {
-            marginTop: '0',
-            color: '#333',
-        },
-        checkboxList: {
-            listStyle: 'none',
-            padding: '0',
-        },
-        checkboxItem: {
-            marginBottom: '10px',
-        },
-        table: {
-            width: '100%',
-            borderCollapse: 'collapse',
-            marginBottom: '20px',
-        },
-        tableHeader: {
-            backgroundColor: '#f4f4f4',
-            border: '1px solid #ddd',
-            padding: '8px',
-            textAlign: 'left',
-        },
-        tableCell: {
-            border: '1px solid #ddd',
-            padding: '8px',
-            textAlign: 'left',
-        },
-    };
+  const [filters, setFilters] = useState({
+    department: "all",
+    fromYear: "all",
+    toYear: "all",
+    company: "all",
+    eventType: "all"
+  });
+  
+  const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'];
+  
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    // In a real app, we would fetch data based on filters
+  };
 
-    return (
-        <div style={styles.container}>
-            <h1>Student Details System</h1>
-
-            {/* Student Details Overview */}
-            <div style={styles.section}>
-                <h2 style={styles.heading}>Student Details Overview</h2>
-                <div>
-                    <strong>Name:</strong>
-                    <ul style={styles.checkboxList}>
-                        <li style={styles.checkboxItem}><input type="checkbox" /> Start Date</li>
-                    </ul>
+  // Calculate totals for each category
+  const totalTechnicalEvents = technicalEvents.length;
+  const totalCulturalEvents = culturalEvents.length;
+  const totalSportsEvents = sportsEvents.length;
+  const totalClubMemberships = clubMemberships.length;
+  
+  // Student activity category data for chart
+  const activityCategoryData = [
+    { name: "Technical", value: totalTechnicalEvents },
+    { name: "Cultural", value: totalCulturalEvents },
+    { name: "Sports", value: totalSportsEvents },
+    { name: "Clubs", value: totalClubMemberships },
+  ];
+  
+  return (
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      {/* Header Section */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900">Student Details Overview</h1>
+        <Button asChild variant="outline" className="bg-white hover:bg-gray-100">
+          <Link to="/placement-report" className="flex items-center">
+            <FileText className="mr-2 h-4 w-4" />
+            View Full Report
+          </Link>
+        </Button>
+      </div>
+      
+      {/* Filter Section */}
+      <FilterSection onFilterChange={handleFilterChange} />
+      
+      {/* Stat Cards Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard 
+          title="Technical Events" 
+          value={totalTechnicalEvents}
+          description="Student participations"
+          icon={<Code className="h-4 w-4" />}
+          trend={{ value: 12, positive: true }}
+        />
+        <StatCard 
+          title="Cultural Events" 
+          value={totalCulturalEvents}
+          description="Student participations"
+          icon={<Music className="h-4 w-4" />}
+          trend={{ value: 8, positive: true }}
+        />
+        <StatCard 
+          title="Sports Events" 
+          value={totalSportsEvents}
+          description="Student participations"
+          icon={<Trophy className="h-4 w-4" />}
+          trend={{ value: 5, positive: true }}
+        />
+        <StatCard 
+          title="Club Memberships" 
+          value={totalClubMemberships}
+          description="Active memberships"
+          icon={<UsersRound className="h-4 w-4" />}
+          trend={{ value: 15, positive: true }}
+        />
+      </div>
+      
+      {/* Charts Section */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Pie Chart Card */}
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div className="space-y-1">
+              <CardTitle className="text-xl font-semibold text-gray-900">Student Activity Categories</CardTitle>
+              <CardDescription className="text-gray-500">Distribution of student participation across activities</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10" asChild>
+              <Link to="/technical-events" className="flex items-center">
+                <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                Details
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={activityCategoryData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={80}
+                    outerRadius={120}
+                    fill="#8884d8"
+                    paddingAngle={2}
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {activityCategoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${value} events`, 'Count']} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Bar Chart Card */}
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div className="space-y-1">
+              <CardTitle className="text-xl font-semibold text-gray-900">Placement Statistics</CardTitle>
+              <CardDescription className="text-gray-500">Overview of student placement data</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10" asChild>
+              <Link to="/placement-data" className="flex items-center">
+                <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                Details
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={placementStats.placementsByDepartment}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="department" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`${value} placements`, 'Count']} />
+                  <Legend />
+                  <Bar 
+                    dataKey="placements" 
+                    fill="#2563eb" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Quick Links and Recent Events Section */}
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* Quick Links Card */}
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl font-semibold text-gray-900">Quick Links</CardTitle>
+            <CardDescription className="text-gray-500">Quick access to key pages</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Button variant="outline" className="w-full justify-start hover:bg-gray-100" asChild>
+                <Link to="/technical-events" className="flex items-center">
+                  <Code className="mr-2 h-4 w-4" />
+                  Technical Events
+                </Link>
+              </Button>
+              <Button variant="outline" className="w-full justify-start hover:bg-gray-100" asChild>
+                <Link to="/cultural-events" className="flex items-center">
+                  <Music className="mr-2 h-4 w-4" />
+                  Cultural Events
+                </Link>
+              </Button>
+              <Button variant="outline" className="w-full justify-start hover:bg-gray-100" asChild>
+                <Link to="/sports-events" className="flex items-center">
+                  <Trophy className="mr-2 h-4 w-4" />
+                  Sports Events
+                </Link>
+              </Button>
+              <Button variant="outline" className="w-full justify-start hover:bg-gray-100" asChild>
+                <Link to="/society-membership" className="flex items-center">
+                  <UsersRound className="mr-2 h-4 w-4" />
+                  Society Membership
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Recent Events Card */}
+        <Card className="md:col-span-2 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl font-semibold text-gray-900">Recent Events</CardTitle>
+            <CardDescription className="text-gray-500">Latest student activities and events</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-start gap-4 p-4 bg-white rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <Code className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                    <strong>Statement:</strong>
-                    <ul style={styles.checkboxList}>
-                        <li style={styles.checkboxItem}><input type="checkbox" /> Postgraduate</li>
-                    </ul>
+                  <h4 className="text-sm font-medium text-gray-900">Hackathon Winners</h4>
+                  <p className="text-sm text-gray-500">3 students from CSE won the national hackathon</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-4 p-4 bg-white rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="bg-green-500/10 p-2 rounded-full">
+                  <Trophy className="h-4 w-4 text-green-500" />
                 </div>
                 <div>
-                    <strong>A Course</strong>
+                  <h4 className="text-sm font-medium text-gray-900">Sports Tournament</h4>
+                  <p className="text-sm text-gray-500">College cricket team reached semi-finals at state level</p>
                 </div>
+              </div>
+              
+              <div className="flex items-start gap-4 p-4 bg-white rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="bg-purple-500/10 p-2 rounded-full">
+                  <BriefcaseBusiness className="h-4 w-4 text-purple-500" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900">Placement Drive</h4>
+                  <p className="text-sm text-gray-500">15 students placed in top tech companies last week</p>
+                </div>
+              </div>
             </div>
-
-            {/* Year of Report */}
-            <div style={styles.section}>
-                <h2 style={styles.heading}>Year of Report</h2>
-                <table style={styles.table}>
-                    <thead>
-                        <tr>
-                            <th style={styles.tableHeader}>Year Name</th>
-                            <th style={styles.tableHeader}>Number</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style={styles.tableCell}>A (1) Year</td>
-                            <td style={styles.tableCell}>A (2) Year</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Year/Year */}
-            <div style={styles.section}>
-                <h2 style={styles.heading}>Year/Year</h2>
-                <ul style={styles.checkboxList}>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> Start Date</li>
-                </ul>
-            </div>
-
-            {/* Year/Student */}
-            <div style={styles.section}>
-                <h2 style={styles.heading}>Year/Student</h2>
-                <ul style={styles.checkboxList}>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 100% to complete</li>
-                </ul>
-            </div>
-
-            {/* Placement Size */}
-            <div style={styles.section}>
-                <h2 style={styles.heading}>Placement Size</h2>
-                <ul style={styles.checkboxList}>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 100% to complete</li>
-                </ul>
-            </div>
-
-            {/* Study Position */}
-            <div style={styles.section}>
-                <h2 style={styles.heading}>Study Position</h2>
-                <ul style={styles.checkboxList}>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 100% to complete</li>
-                </ul>
-            </div>
-
-            {/* Academic Achievement */}
-            <div style={styles.section}>
-                <h2 style={styles.heading}>Academic Achievement</h2>
-                <ul style={styles.checkboxList}>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 100% to complete</li>
-                </ul>
-            </div>
-
-            {/* Students by Department */}
-            <div style={styles.section}>
-                <h2 style={styles.heading}>Students by Department</h2>
-                <ul style={styles.checkboxList}>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 94</li>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 64</li>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 36</li>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 0</li>
-                </ul>
-            </div>
-
-            {/* Students’ Performance */}
-            <div style={styles.section}>
-                <h2 style={styles.heading}>Students’ Performance</h2>
-                <ul style={styles.checkboxList}>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 150</li>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 200</li>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 0</li>
-                </ul>
-            </div>
-
-            {/* Students’ Relationship Distribution */}
-            <div style={styles.section}>
-                <h2 style={styles.heading}>Students’ Relationship Distribution</h2>
-                <ul style={styles.checkboxList}>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 0</li>
-                </ul>
-            </div>
-
-            {/* Students’ Participation by Activity */}
-            <div style={styles.section}>
-                <h2 style={styles.heading}>Students’ Participation by Activity</h2>
-                <ul style={styles.checkboxList}>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 300</li>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 100</li>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 80</li>
-                    <li style={styles.checkboxItem}><input type="checkbox" /> 0</li>
-                </ul>
-            </div>
-
-            {/* Student 25% */}
-            <div style={styles.section}>
-                <h2 style={styles.heading}>Student 25%</h2>
-                <p>Product 35%</p>
-                <p>Product 25%</p>
-            </div>
-
-            {/* Notes */}
-            <div style={styles.section}>
-                <h2 style={styles.heading}>Notes</h2>
-                <p>Reviews at GCAP & score + Professional</p>
-                <p>Reviews at GPAS</p>
-                <p>Reviews at GPAS</p>
-            </div>
-        </div>
-    );
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 };
 
-export default Dashboard;
+export default Dashboard; 
