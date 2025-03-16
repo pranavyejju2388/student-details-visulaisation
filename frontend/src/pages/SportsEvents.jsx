@@ -15,45 +15,85 @@ import {
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Download } from "lucide-react";
-import FilterSection from "../components/FilterSection";
 import VisualizationSelector from "../components/VisualizationSelector";
-import { sportsEvents, sportsTypes, sportsCategories } from "../utils/data";
+import { sportsEvents } from "../utils/data";
+
+// Define filter options for Type, Category, and Year Range
+const typeOptions = [
+  { value: "all", label: "All Types" },
+  { value: "Inter Department", label: "Inter Department" },
+  { value: "Inter NIT", label: "Inter NIT" },
+  { value: "Inter College", label: "Inter College" },
+  { value: "Inter Hostel", label: "Inter Hostel" },
+  { value: "Other", label: "Other" },
+];
+
+const categoryOptions = [
+  { value: "all", label: "All Categories" },
+  { value: "Kabaddi", label: "Kabaddi" },
+  { value: "Badminton", label: "Badminton" },
+  { value: "Basketball", label: "Basketball" },
+  { value: "Handball", label: "Handball" },
+  { value: "Cricket", label: "Cricket" },
+  { value: "Hockey", label: "Hockey" },
+];
+
+// Generate year options dynamically (e.g., from 2000 to current year)
+const currentYear = new Date().getFullYear();
+const yearOptions = Array.from({ length: currentYear - 2000 + 1 }, (_, index) => ({
+  value: 2000 + index,
+  label: (2000 + index).toString(),
+}));
 
 const SportsEvents = () => {
   const [filters, setFilters] = useState({
-    department: "all",
+    type: "all",
+    category: "all",
     fromYear: "all",
     toYear: "all",
-    category: "all",
   });
   const [visualizationType, setVisualizationType] = useState("bar");
   
   const COLORS = ['#10b981', '#f59e0b', '#0ea5e9', '#8b5cf6', '#f43f5e', '#14b8a6'];
   
-  const handleFilterChange = (newFilters) => {
-    setFilters(newFilters);
+  const handleFilterChange = (filterType, value) => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [filterType]: value,
+    }));
   };
   
+  // Filter sports events based on selected filters
+  const filteredEvents = sportsEvents.filter(event => {
+    const matchesType = filters.type === "all" || event.type === filters.type;
+    const matchesCategory = filters.category === "all" || event.category === filters.category;
+    const matchesYearRange = 
+      (filters.fromYear === "all" || new Date(event.date).getFullYear() >= filters.fromYear) &&
+      (filters.toYear === "all" || new Date(event.date).getFullYear() <= filters.toYear);
+    
+    return matchesType && matchesCategory && matchesYearRange;
+  });
+  
   // Group data by sport category
-  const categoryData = sportsCategories.map(category => {
-    const count = sportsEvents.filter(event => 
-      event.category.toLowerCase().includes(category.name.toLowerCase())
+  const categoryData = categoryOptions.map(category => {
+    const count = filteredEvents.filter(event => 
+      event.category.toLowerCase().includes(category.value.toLowerCase())
     ).length;
     
     return {
-      name: category.name,
+      name: category.label,
       count
     };
   });
   
   // Group data by sport type
-  const typeData = sportsTypes.map(type => {
-    const count = sportsEvents.filter(event => 
-      event.type.toLowerCase().includes(type.name.toLowerCase())
+  const typeData = typeOptions.map(type => {
+    const count = filteredEvents.filter(event => 
+      event.type.toLowerCase().includes(type.value.toLowerCase())
     ).length;
     
     return {
-      name: type.name,
+      name: type.label,
       count
     };
   });
@@ -68,10 +108,71 @@ const SportsEvents = () => {
         </Button>
       </div>
       
-      <FilterSection 
-        onFilterChange={handleFilterChange}
-        showEventTypes={true}
-      />
+      {/* Type Filter Section */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2">Type</label>
+        <select
+          className="w-full p-2 border rounded-md"
+          value={filters.type}
+          onChange={(e) => handleFilterChange("type", e.target.value)}
+        >
+          {typeOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      
+      {/* Category Filter Section */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2">Category</label>
+        <select
+          className="w-full p-2 border rounded-md"
+          value={filters.category}
+          onChange={(e) => handleFilterChange("category", e.target.value)}
+        >
+          {categoryOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      
+      {/* Year Range Filter Section */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="block text-sm font-medium mb-2">From Year</label>
+          <select
+            className="w-full p-2 border rounded-md"
+            value={filters.fromYear}
+            onChange={(e) => handleFilterChange("fromYear", e.target.value)}
+          >
+            <option value="all">All Years</option>
+            {yearOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-2">To Year</label>
+          <select
+            className="w-full p-2 border rounded-md"
+            value={filters.toYear}
+            onChange={(e) => handleFilterChange("toYear", e.target.value)}
+          >
+            <option value="all">All Years</option>
+            {yearOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Sports Statistics</h2>
@@ -209,7 +310,7 @@ const SportsEvents = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {sportsEvents.map((event) => (
+                  {filteredEvents.map((event) => (
                     <tr key={event.id} className="border-t">
                       <td className="py-3 px-4">{event.eventName}</td>
                       <td className="py-3 px-4">{event.role}</td>
