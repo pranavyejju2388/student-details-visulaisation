@@ -54,12 +54,14 @@ const Navbar = ({ setIsMobileMenuOpen, isDarkMode, toggleDarkMode }) => {
             variant="ghost"
             size="icon"
             onClick={toggleDarkMode}
-            className="hover:bg-gray-100 dark:hover:bg-gray-800"
+            className={`hover:bg-gray-100 dark:hover:bg-gray-800 ${
+              isDarkMode ? "text-yellow-400" : "text-gray-900"
+            }`}
           >
             {isDarkMode ? (
-              <Sun className="h-5 w-5 text-yellow-400" />
+              <Sun className="h-5 w-5" />
             ) : (
-              <Moon className="h-5 w-5 text-gray-900" />
+              <Moon className="h-5 w-5" />
             )}
           </Button>
 

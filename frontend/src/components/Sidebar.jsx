@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { 
@@ -51,7 +50,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
           </div>
           
           <nav className="flex-1 overflow-y-auto py-4 px-3">
-            <div className="text-xs uppercase font-semibold text-muted-foreground tracking-wider px-3 mb-2">
+            {/* Main Navigation Section */}
+            <div className="text-xs uppercase font-semibold text-muted-foreground tracking-wider px-3 mb-2 text-center">
               Main Navigation
             </div>
             <ul className="space-y-1.5 mb-6">
@@ -59,8 +59,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
                 <NavLink
                   to="/dashboard"
                   className={({ isActive }) => cn(
-                    "nav-link",
-                    isActive && "active"
+                    "flex items-center gap-3 p-3 rounded-md text-sm font-medium transition-colors hover:bg-gray-100",
+                    isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:text-blue-700"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -70,7 +70,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
               </li>
             </ul>
             
-            <div className="text-xs uppercase font-semibold text-muted-foreground tracking-wider px-3 mb-2">
+            {/* Student Activities Section */}
+            <div className="text-xs uppercase font-semibold text-muted-foreground tracking-wider px-3 mb-2 text-center">
               Student Activities
             </div>
             <ul className="space-y-1.5 mb-6">
@@ -78,8 +79,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
                 <NavLink
                   to="/technical-events"
                   className={({ isActive }) => cn(
-                    "nav-link",
-                    isActive && "active"
+                    "flex items-center gap-3 p-3 rounded-md text-sm font-medium transition-colors hover:bg-gray-100",
+                    isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:text-blue-700"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -91,8 +92,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
                 <NavLink
                   to="/cultural-events"
                   className={({ isActive }) => cn(
-                    "nav-link",
-                    isActive && "active"
+                    "flex items-center gap-3 p-3 rounded-md text-sm font-medium transition-colors hover:bg-gray-100",
+                    isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:text-blue-700"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -104,8 +105,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
                 <NavLink
                   to="/sports-events"
                   className={({ isActive }) => cn(
-                    "nav-link",
-                    isActive && "active"
+                    "flex items-center gap-3 p-3 rounded-md text-sm font-medium transition-colors hover:bg-gray-100",
+                    isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:text-blue-700"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -117,8 +118,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
                 <NavLink
                   to="/clubs-and-societies"
                   className={({ isActive }) => cn(
-                    "nav-link",
-                    isActive && "active"
+                    "flex items-center gap-3 p-3 rounded-md text-sm font-medium transition-colors hover:bg-gray-100",
+                    isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:text-blue-700"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -128,7 +129,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
               </li>
             </ul>
             
-            <div className="text-xs uppercase font-semibold text-muted-foreground tracking-wider px-3 mb-2">
+            {/* Data & Reports Section */}
+            <div className="text-xs uppercase font-semibold text-muted-foreground tracking-wider px-3 mb-2 text-center">
               Data & Reports
             </div>
             <ul className="space-y-1.5">
@@ -136,8 +138,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
                 <NavLink
                   to="/placement-data"
                   className={({ isActive }) => cn(
-                    "nav-link",
-                    isActive && "active"
+                    "flex items-center gap-3 p-3 rounded-md text-sm font-medium transition-colors hover:bg-gray-100",
+                    isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:text-blue-700"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -149,8 +151,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
                 <NavLink
                   to="/events-data"
                   className={({ isActive }) => cn(
-                    "nav-link",
-                    isActive && "active"
+                    "flex items-center gap-3 p-3 rounded-md text-sm font-medium transition-colors hover:bg-gray-100",
+                    isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:text-blue-700"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -162,8 +164,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
                 <NavLink
                   to="/placement-results"
                   className={({ isActive }) => cn(
-                    "nav-link",
-                    isActive && "active"
+                    "flex items-center gap-3 p-3 rounded-md text-sm font-medium transition-colors hover:bg-gray-100",
+                    isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:text-blue-700"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -175,8 +177,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
                 <NavLink
                   to="/event-results"
                   className={({ isActive }) => cn(
-                    "nav-link",
-                    isActive && "active"
+                    "flex items-center gap-3 p-3 rounded-md text-sm font-medium transition-colors hover:bg-gray-100",
+                    isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:text-blue-700"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -188,8 +190,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
                 <NavLink
                   to="/society-membership"
                   className={({ isActive }) => cn(
-                    "nav-link",
-                    isActive && "active"
+                    "flex items-center gap-3 p-3 rounded-md text-sm font-medium transition-colors hover:bg-gray-100",
+                    isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:text-blue-700"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -201,8 +203,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
                 <NavLink
                   to="/placement-report"
                   className={({ isActive }) => cn(
-                    "nav-link",
-                    isActive && "active"
+                    "flex items-center gap-3 p-3 rounded-md text-sm font-medium transition-colors hover:bg-gray-100",
+                    isActive ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:text-blue-700"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -213,6 +215,7 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen, handleLogout }) => {
             </ul>
           </nav>
           
+          {/* Logout Button */}
           <div className="mt-auto p-4 border-t">
             <Button 
               variant="ghost" 
