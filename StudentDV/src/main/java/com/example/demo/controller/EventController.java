@@ -1,33 +1,76 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.Event;
-import com.example.demo.repository.EventRepository;
+import com.example.demo.service.EventService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/events")
 public class EventController {
 
-    private final EventRepository eventRepository;
+    private final EventService eventService;
 
-    public EventController(EventRepository eventRepository) {
-        this.eventRepository = eventRepository;
+    public EventController(EventService eventService) {
+        this.eventService = eventService;
     }
 
-    // 1️⃣ Get All Events
+    // Get all events
     @GetMapping
     public ResponseEntity<List<Event>> getAllEvents() {
-        List<Event> events = eventRepository.findAll();
-        return ResponseEntity.ok(events);
+        return ResponseEntity.ok(eventService.getAllEvents());
     }
 
-    // 2️⃣ Add a New Event
-    @PostMapping
-    public ResponseEntity<Event> addEvent(@RequestBody Event event) {
-        Event savedEvent = eventRepository.save(event);
-        return ResponseEntity.ok(savedEvent);
+    // Get events by type
+    @GetMapping("/type/{eventType}")
+    public ResponseEntity<List<Event>> getEventsByType(@PathVariable String eventType) {
+        return ResponseEntity.ok(eventService.getEventsByType(eventType));
+    }
+
+    // Get event by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<Event> getEventById(@PathVariable Long id) {
+        return eventService.getEventById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // Filter events by multiple criteria
+    @GetMapping("/filter")
+    public ResponseEntity<List<Event>> filterEvents(
+        @RequestParam(required = false) String department,
+        @RequestParam(required = false) Integer fromYear,
+        @RequestParam(required = false) Integer toYear,
+        @RequestParam(required = false) String category,
+        @RequestParam(required = false) String type
+    ) {
+        return ResponseEntity.ok(eventService.filterEvents(department, fromYear, toYear, category, type));
+    }
+
+    // Group events by category
+    @GetMapping("/group-by-category")
+    public ResponseEntity<Map<String, Long>> getEventsGroupedByCategory() {
+        return ResponseEntity.ok(eventService.getEventsGroupedByCategory());
+    }
+
+    // Group events by type
+    @GetMapping("/group-by-type")
+    public ResponseEntity<Map<String, Long>> getEventsGroupedByType() {
+        return ResponseEntity.ok(eventService.getEventsGroupedByType());
+    }
+
+    // Get achievement distribution
+    @GetMapping("/achievement-distribution")
+    public ResponseEntity<Map<String, Long>> getAchievementDistribution() {
+        return ResponseEntity.ok(eventService.getAchievementDistribution());
+    }
+
+    // Get events over time
+    @GetMapping("/events-over-time")
+    public ResponseEntity<Map<Integer, Long>> getEventsOverTime() {
+        return ResponseEntity.ok(eventService.getEventsOverTime());
     }
 }

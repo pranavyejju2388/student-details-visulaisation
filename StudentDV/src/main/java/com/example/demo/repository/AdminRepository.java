@@ -7,13 +7,13 @@ import java.util.Optional;
 
 @Repository
 public interface AdminRepository extends JpaRepository<Admin, Long> {
-    
-    // Find an admin by username (used in authentication)
+
+    // Find admin by username
     Optional<Admin> findByUsername(String username);
-    
-    // Check if an admin exists by username (for registration validation)
+
+    // Check if admin exists by username
     boolean existsByUsername(String username);
 
-    // Optionally, add a method to delete an admin by username
+    // Optionally, add method to delete admin by username
     void deleteByUsername(String username);
 }

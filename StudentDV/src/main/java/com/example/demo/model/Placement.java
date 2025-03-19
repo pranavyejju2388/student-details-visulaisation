@@ -1,67 +1,46 @@
 package com.example.demo.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "placements") // Renamed to "placements" for consistency
+@Table(name = "placements")
 public class Placement {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     private String studentName;
     private String company;
     private String jobRole;
     private int year;
-
-    // Constructors
-    public Placement() {}
-
-    public Placement(String studentName, String company, String jobRole, int year) {
-        this.studentName = studentName;
-        this.company = company;
-        this.jobRole = jobRole;
-        this.year = year;
-    }
+    private String departmentName; // Correct field name
+    private Double packageAmount;
+    private LocalDate date; // Ensure this field exists
 
     // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getStudentName() { return studentName; }
+    public void setStudentName(String studentName) { this.studentName = studentName; }
 
-    public String getStudentName() {
-        return studentName;
-    }
+    public String getCompany() { return company; }
+    public void setCompany(String company) { this.company = company; }
 
-    public void setStudentName(String studentName) {
-        this.studentName = studentName;
-    }
+    public String getJobRole() { return jobRole; }
+    public void setJobRole(String jobRole) { this.jobRole = jobRole; }
 
-    public String getCompany() {
-        return company;
-    }
+    public int getYear() { return year; }
+    public void setYear(int year) { this.year = year; }
 
-    public void setCompany(String company) {
-        this.company = company;
-    }
+    public String getDepartmentName() { return departmentName; }
+    public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
 
-    public String getJobRole() {
-        return jobRole;
-    }
+    public Double getPackageAmount() { return packageAmount; }
+    public void setPackageAmount(Double packageAmount) { this.packageAmount = packageAmount; }
 
-    public void setJobRole(String jobRole) {
-        this.jobRole = jobRole;
-    }
-
-    public int getYear() {
-        return year;
-    }
-
-    public void setYear(int year) {
-        this.year = year;
-    }
+    public LocalDate getDate() { return date; }
+    public void setDate(LocalDate date) { this.date = date; }
 }
