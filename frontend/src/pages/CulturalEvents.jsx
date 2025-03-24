@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   BarChart, 
   Bar, 
@@ -18,7 +18,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Download, ChevronDown, RefreshCw } from "lucide-react";
 import VisualizationSelector from "../components/VisualizationSelector";
-import { culturalEvents, culturalCategories } from "../utils/data";
+import axios from "axios"; // Import Axios for API calls
 
 const CulturalEvents = () => {
   const [filters, setFilters] = useState({
@@ -28,9 +28,31 @@ const CulturalEvents = () => {
     category: "all",
   });
   const [visualizationType, setVisualizationType] = useState("bar");
-  
+  const [culturalEvents, setCulturalEvents] = useState([]); // State to store fetched events
+  const [loading, setLoading] = useState(false); // Loading state
+  const [error, setError] = useState(null); // Error state
+
   const COLORS = ['#f43f5e', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6', '#0ea5e9'];
-  
+
+  // Fetch cultural events from the backend
+  const fetchCulturalEvents = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get("http://localhost:8080/api/events/type/Cultural"); // Replace with your API endpoint
+      setCulturalEvents(response.data);
+    } catch (error) {
+      setError("Failed to fetch cultural events");
+      console.error("Error fetching cultural events:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCulturalEvents();
+  }, []);
+
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
   };
@@ -54,22 +76,14 @@ const CulturalEvents = () => {
     );
   });
 
-  console.log("Filtered Events:", filteredEvents); // Debugging
-
   // Group data by category for visualization
-  const categoryData = culturalCategories.map(category => {
-    const count = filteredEvents.filter(event => 
-      event.category.toLowerCase().includes(category.name.toLowerCase())
-    ).length;
-    
-    return {
-      name: category.name,
-      count
-    };
-  });
+  const categoryData = [
+    { name: "Hackathon", count: filteredEvents.filter(event => event.category === "Hackathon").length },
+    { name: "Ragam Workshops", count: filteredEvents.filter(event => event.category === "Ragam Workshops").length },
+    { name: "Cultural Fest - Ragam", count: filteredEvents.filter(event => event.category === "Cultural Fest - Ragam").length },
+    { name: "Other Cultural Fests", count: filteredEvents.filter(event => event.category === "Other Cultural Fests").length },
+  ];
 
-  console.log("Category Data:", categoryData); // Debugging
-  
   // Group data by achievement status
   const achievementData = [
     { name: "First Place", value: filteredEvents.filter(event => event.achievement.includes("First")).length },
@@ -83,8 +97,6 @@ const CulturalEvents = () => {
       !event.achievement.includes("Participation")
     ).length },
   ];
-
-  console.log("Achievement Data:", achievementData); // Debugging
 
   // Group data by year for Line Chart
   const eventsByYear = filteredEvents.reduce((acc, event) => {
@@ -101,12 +113,13 @@ const CulturalEvents = () => {
     events: eventsByYear[year]
   })).sort((a, b) => a.year - b.year);
 
-  console.log("Line Chart Data:", lineChartData); // Debugging
-
   // Departments, years, and event types data
   const departments = ["CSE", "ECE", "MECH", "EEE", "CHEM", "CIVIL"];
   const years = Array.from({ length: 11 }, (_, i) => 2025 - i); // 2025 to 2015
   const eventTypes = ["Hackathon", "Ragam Workshops", "Cultural Fest - Ragam", "Other Cultural Fests"];
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <div className="space-y-6">
@@ -209,14 +222,7 @@ const CulturalEvents = () => {
         </CardContent>
       </Card>
       
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Event Statistics</h2>
-        <VisualizationSelector 
-          onSelect={setVisualizationType}
-          defaultType={visualizationType}
-        />
-      </div>
-      
+      {/* Charts Section */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -361,6 +367,7 @@ const CulturalEvents = () => {
         </CardContent>
       </Card>
       
+      {/* Event Details Table */}
       <Card>
         <CardHeader>
           <CardTitle>Cultural Events Data</CardTitle>
@@ -380,8 +387,8 @@ const CulturalEvents = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredEvents.map((event) => (
-                    <tr key={event.id} className="border-t">
+                  {filteredEvents.map((event, index) => (
+                    <tr key={`event-${event.id}-${index}`} className="border-t">
                       <td className="py-3 px-4">{event.eventName}</td>
                       <td className="py-3 px-4">{event.host}</td>
                       <td className="py-3 px-4">{event.category}</td>

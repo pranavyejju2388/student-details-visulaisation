@@ -2,22 +2,16 @@ package com.example.demo.repository;
 
 import com.example.demo.model.Visualization;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Repository
 public interface VisualizationRepository extends JpaRepository<Visualization, Long> {
-
-    // Count placements by department for a specific year
-    @Query("SELECT COUNT(p) FROM Placement p WHERE p.departmentName = :departmentName AND FUNCTION('YEAR', p.date) = :year")
-    Long countPlacementsByDepartment(@Param("departmentName") String departmentName, @Param("year") int year);
-
-    // Count students participating in events for a given year
-    @Query("SELECT COUNT(e) FROM Event e WHERE FUNCTION('YEAR', e.date) = :year")
-    Long countEventsByYear(@Param("year") int year);
-
-    // Count students in club memberships
-    @Query("SELECT COUNT(c) FROM ClubMembership c WHERE c.clubName = :clubName")
-    Long countClubMembers(@Param("clubName") String clubName);
+    List<Visualization> findByChartType(String chartType);
+    List<Visualization> findByCategory(String category);
+    List<Visualization> findByFilterCriteria(String filterCriteria);
+    List<Visualization> findByEventDateBetween(LocalDate startDate, LocalDate endDate);
+    List<Visualization> findByDataCountGreaterThanEqual(int dataCount);
 }

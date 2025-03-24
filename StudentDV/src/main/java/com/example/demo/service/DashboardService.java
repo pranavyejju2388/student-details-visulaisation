@@ -1,7 +1,8 @@
 package com.example.demo.service;
 
+import com.example.demo.model.PlacementData;
 import com.example.demo.repository.DepartmentRepository;
-import com.example.demo.repository.PlacementRepository;
+import com.example.demo.repository.PlacementDataRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -13,52 +14,40 @@ import java.util.stream.Collectors;
 public class DashboardService {
 
     private final DepartmentRepository departmentRepository;
-    private final PlacementRepository placementRepository;
+    private final PlacementDataRepository placementDataRepository;
 
-    public DashboardService(DepartmentRepository departmentRepository, PlacementRepository placementRepository) {
+    public DashboardService(DepartmentRepository departmentRepository, PlacementDataRepository placementDataRepository) {
         this.departmentRepository = departmentRepository;
-        this.placementRepository = placementRepository;
+        this.placementDataRepository = placementDataRepository;
     }
 
-    // Fetch placements by department
     public List<Map<String, Object>> getPlacementsByDepartment() {
+        List<PlacementData> allPlacements = placementDataRepository.findAll();
+
+        Map<String, Long> placementsByDepartment = allPlacements.stream()
+            .filter(placement -> placement.getDepartment() != null)
+            .collect(Collectors.groupingBy(
+                PlacementData::getDepartment, 
+                Collectors.counting()
+            ));
+
         return departmentRepository.findAll().stream()
             .map(department -> {
                 Map<String, Object> result = new HashMap<>();
-                result.put("department", department.getName()); // Accessing the name field of the Department entity
-                result.put("placements", placementRepository.countByDepartmentName(department.getName()));
+                result.put("department", department.getName());
+                result.put("placements", placementsByDepartment.getOrDefault(department.getName(), 0L));
                 return result;
             })
             .collect(Collectors.toList());
     }
 
-    // Fetch placements by year and department
-    public List<Map<String, Object>> getPlacementsByYearAndDepartment(int year, String departmentName) {
-        return placementRepository.findByYearAndDepartmentName(year, departmentName).stream()
-            .map(placement -> {
-                Map<String, Object> result = new HashMap<>();
-                result.put("studentName", placement.getStudentName());
-                result.put("company", placement.getCompany());
-                result.put("jobRole", placement.getJobRole());
-                result.put("year", placement.getYear());
-                result.put("packageAmount", placement.getPackageAmount()); // Added package amount
-                return result;
-            })
-            .collect(Collectors.toList());
+    public Object getDepartments() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getDepartments'");
     }
 
-    // Fetch all departments
-    public List<String> getDepartments() {
-        return departmentRepository.findAll().stream()
-            .map(department -> department.getName()) // Accessing the name field of the Department entity
-            .collect(Collectors.toList());
-    }
-
-    // Fetch placement statistics by department and year
-    public Map<String, Object> getPlacementStatisticsByDepartmentAndYear(String departmentName, int year) {
-        Map<String, Object> statistics = new HashMap<>();
-        statistics.put("totalPlacements", placementRepository.countPlacementsByDepartment(departmentName, year));
-        statistics.put("averagePackage", placementRepository.calculateAveragePackageByDepartmentAndYear(departmentName, year));
-        return statistics;
+    public Object getPlacementsByYearAndDepartment(int year, String departmentName) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getPlacementsByYearAndDepartment'");
     }
 }
