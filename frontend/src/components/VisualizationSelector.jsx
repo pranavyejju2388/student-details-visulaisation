@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { BarChart4, PieChart, LineChart, BarChart } from "lucide-react";
+import { BarChart4, PieChart,  BarChart } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { cn } from "../lib/utils";
 
@@ -15,8 +15,6 @@ const VisualizationSelector = ({ onSelect, defaultType = "bar" }) => {
   const visualizationTypes = [
     { type: "bar", icon: <BarChart className="h-4 w-4" />, label: "Bar Chart" },
     { type: "pie", icon: <PieChart className="h-4 w-4" />, label: "Pie Chart" },
-    { type: "line", icon: <LineChart className="h-4 w-4" />, label: "Line Chart" },
-    { type: "stacked", icon: <BarChart4 className="h-4 w-4" />, label: "Stacked Bar" },
   ];
 
   return (

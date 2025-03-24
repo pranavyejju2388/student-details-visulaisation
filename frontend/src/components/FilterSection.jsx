@@ -8,33 +8,39 @@ import {
 } from "../components/ui/select";
 import { Button } from "../components/ui/button";
 import { RefreshCw } from "lucide-react";
-import { 
-  departments, 
-  companies, 
-  eventTypes, 
-  years 
-} from "../utils/data";
+import { departments } from "../utils/data";
 
-const FilterSection = ({ showEventTypes = false, onFilterChange }) => {
+const clubCategories = [
+  { id: "cultural", name: "Cultural Club" },
+  { id: "technical", name: "Technical Club" },
+  { id: "hometeam", name: "Hometeam" },
+  { id: "society", name: "Society" },
+  { id: "other", name: "Other" }
+];
+
+const FilterSection = ({ onFilterChange }) => {
   const [department, setDepartment] = useState("all");
   const [fromYear, setFromYear] = useState("all");
   const [toYear, setToYear] = useState("all");
-  const [company, setCompany] = useState("all");
-  const [eventType, setEventType] = useState("all");
+  const [category, setCategory] = useState("all");
+
+  // Dynamically generate years from 2015 to 2025
+  const years = Array.from({ length: 11 }, (_, i) => ({
+    id: String(2015 + i),
+    name: String(2015 + i)
+  }));
 
   const handleFilterChange = (key, value) => {
     if (key === "department") setDepartment(value);
     if (key === "fromYear") setFromYear(value);
     if (key === "toYear") setToYear(value);
-    if (key === "company") setCompany(value);
-    if (key === "eventType") setEventType(value);
+    if (key === "category") setCategory(value);
 
     const updatedFilters = {
       department: key === "department" ? value : department,
       fromYear: key === "fromYear" ? value : fromYear,
       toYear: key === "toYear" ? value : toYear,
-      company: key === "company" ? value : company,
-      eventType: key === "eventType" ? value : eventType
+      category: key === "category" ? value : category
     };
 
     onFilterChange(updatedFilters);
@@ -44,15 +50,13 @@ const FilterSection = ({ showEventTypes = false, onFilterChange }) => {
     setDepartment("all");
     setFromYear("all");
     setToYear("all");
-    setCompany("all");
-    setEventType("all");
+    setCategory("all");
     
     onFilterChange({
       department: "all",
       fromYear: "all",
       toYear: "all",
-      company: "all",
-      eventType: "all"
+      category: "all"
     });
   };
 
@@ -60,14 +64,16 @@ const FilterSection = ({ showEventTypes = false, onFilterChange }) => {
     <div className="filter-section animate-fade-in">
       <h3 className="text-lg font-medium mb-4">Filters</h3>
       
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Department Dropdown */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Department</label>
           <Select value={department} onValueChange={(value) => handleFilterChange("department", value)}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white">
               <SelectValue placeholder="Select Department" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg">
+              <SelectItem value="all">All Departments</SelectItem>
               {departments.map((dept) => (
                 <SelectItem key={dept.id} value={dept.id}>
                   {dept.name}
@@ -77,13 +83,15 @@ const FilterSection = ({ showEventTypes = false, onFilterChange }) => {
           </Select>
         </div>
         
+        {/* From Year Dropdown */}
         <div className="space-y-2">
           <label className="text-sm font-medium">From Year</label>
           <Select value={fromYear} onValueChange={(value) => handleFilterChange("fromYear", value)}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white">
               <SelectValue placeholder="Select From Year" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg">
+              <SelectItem value="all">All Years</SelectItem>
               {years.map((yr) => (
                 <SelectItem key={yr.id} value={yr.id}>
                   {yr.name}
@@ -93,13 +101,15 @@ const FilterSection = ({ showEventTypes = false, onFilterChange }) => {
           </Select>
         </div>
         
+        {/* To Year Dropdown */}
         <div className="space-y-2">
           <label className="text-sm font-medium">To Year</label>
           <Select value={toYear} onValueChange={(value) => handleFilterChange("toYear", value)}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-white">
               <SelectValue placeholder="Select To Year" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg">
+              <SelectItem value="all">All Years</SelectItem>
               {years.map((yr) => (
                 <SelectItem key={yr.id} value={yr.id}>
                   {yr.name}
@@ -109,41 +119,26 @@ const FilterSection = ({ showEventTypes = false, onFilterChange }) => {
           </Select>
         </div>
         
+        {/* Category Dropdown */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Company</label>
-          <Select value={company} onValueChange={(value) => handleFilterChange("company", value)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select Company" />
+          <label className="text-sm font-medium">Category</label>
+          <Select value={category} onValueChange={(value) => handleFilterChange("category", value)}>
+            <SelectTrigger className="w-full bg-white">
+              <SelectValue placeholder="Select Category" />
             </SelectTrigger>
-            <SelectContent>
-              {companies.map((comp) => (
-                <SelectItem key={comp.id} value={comp.id}>
-                  {comp.name}
+            <SelectContent className="bg-white border border-gray-200 shadow-lg">
+              <SelectItem value="all">All Categories</SelectItem>
+              {clubCategories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id}>
+                  {cat.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        
-        {showEventTypes && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Event Type</label>
-            <Select value={eventType} onValueChange={(value) => handleFilterChange("eventType", value)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Event Type" />
-              </SelectTrigger>
-              <SelectContent>
-                {eventTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.id}>
-                    {type.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
       </div>
       
+      {/* Reset Filters Button */}
       <div className="mt-6 flex justify-end">
         <Button
           variant="outline"

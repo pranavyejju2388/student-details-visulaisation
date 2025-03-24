@@ -6,66 +6,54 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
 import { Mail, LockKeyhole, LogIn } from "lucide-react";
+import axios from "axios";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Mock user data
-  const users = [
-    { email: "faculty@nitc.edu", password: "password", role: "faculty" },
-    { email: "admin@nitc.edu", password: "password", role: "admin" },
-  ];
-
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address");
-      setIsLoading(false);
-      toast({
-        variant: "destructive",
-        title: "Invalid email",
-        description: "Please enter a valid email address",
+    try {
+      const response = await axios.post("http://localhost:8080/api/admin/login", {
+        username,
+        password,
       });
-      return;
-    }
 
-    // Simulate API call
-    setTimeout(() => {
-      const user = users.find(
-        (u) => u.email === email && u.password === password
-      );
-
-      if (user) {
+      if (response.data) {
         localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("userEmail", email);
-        localStorage.setItem("userRole", user.role);
+        localStorage.setItem("username", username);
         
         toast({
           title: "Login successful",
-          description: `Welcome back, ${email}!`,
+          description: `Welcome back, ${username}!`,
         });
         
         navigate("/dashboard");
       } else {
-        setError("Invalid email or password");
+        setError("Invalid username or password");
         toast({
           variant: "destructive",
           title: "Login failed",
           description: "Please check your credentials and try again",
         });
       }
-      
+    } catch (err) {
+      setError("Invalid username or password");
+      toast({
+        variant: "destructive",
+        title: "Login failed",
+        description: "Please check your credentials and try again",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleGoogleLogin = () => {
@@ -76,8 +64,7 @@ const Login = () => {
       // Mock successful Google login
       const googleEmail = "user@gmail.com";
       localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userEmail", googleEmail);
-      localStorage.setItem("userRole", "faculty"); // Default role for Google login
+      localStorage.setItem("username", googleEmail);
       
       toast({
         title: "Google login successful",
@@ -101,17 +88,17 @@ const Login = () => {
           <form onSubmit={handleLogin}>
             <CardContent className="p-6 space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-700">Email Address</Label>
+                <Label htmlFor="username" className="text-gray-700">Username</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter your username"
                     required
-                    autoComplete="email"
+                    autoComplete="username"
                     className="pl-10 transition-all duration-300 focus:ring-2 focus:ring-blue-500/30"
                   />
                 </div>
@@ -153,7 +140,7 @@ const Login = () => {
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300" 
                   disabled={isLoading}
                 >
-                  {isLoading ? "Signing in..." : "Sign in with Email"}
+                  {isLoading ? "Signing in..." : "Sign in"}
                   <LogIn className="ml-2 h-4 w-4" />
                 </Button>
                 
@@ -188,7 +175,7 @@ const Login = () => {
         
         <div className="mt-4 text-center text-sm text-gray-600">
           <div className="text-gray-600">
-            Demo credentials: <span className="font-medium">admin@school.edu</span> / <span className="font-medium">password</span>
+            Demo credentials: <span className="font-medium">admin</span> / <span className="font-medium">password</span>
           </div>
         </div>
       </div>

@@ -191,4 +191,4 @@ const EventResults = () => {
   );
 };
 
-export default EventResults;
+export default EventResults; 
