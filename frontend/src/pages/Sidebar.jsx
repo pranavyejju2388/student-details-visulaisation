@@ -1,15 +1,21 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Briefcase, 
-  Code, 
-  LogOut, 
-  ChevronLeft, 
-  ChevronRight, 
-  Sun, 
-  Moon, 
-  User 
+import {
+  LayoutDashboard,
+  Briefcase,
+  Code,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  Sun,
+  Moon,
+  User,
+  Activity,
+  Calendar,
+  Trophy,
+  Users,
+  FileText,
+  BarChart2,
 } from "lucide-react";
 
 const Sidebar = ({ isDarkMode, toggleDarkMode }) => {
@@ -19,19 +25,74 @@ const Sidebar = ({ isDarkMode, toggleDarkMode }) => {
   // Sidebar links with icons
   const links = [
     {
-      path: "/dashboard",
-      name: "Dashboard",
-      icon: <LayoutDashboard className="h-5 w-5" />,
+      section: "MAIN NAVIGATION",
+      items: [
+        {
+          path: "/dashboard",
+          name: "Dashboard",
+          icon: <LayoutDashboard className="h-5 w-5" />,
+        },
+      ],
     },
     {
-      path: "/placement-data",
-      name: "Placement Data",
-      icon: <Briefcase className="h-5 w-5" />,
+      section: "STUDENT ACTIVITIES",
+      items: [
+        {
+          path: "/technical-events",
+          name: "Technical Events",
+          icon: <Code className="h-5 w-5" />,
+        },
+        {
+          path: "/cultural-events",
+          name: "Cultural Events",
+          icon: <Calendar className="h-5 w-5" />,
+        },
+        {
+          path: "/sports-events",
+          name: "Sports Events",
+          icon: <Trophy className="h-5 w-5" />,
+        },
+        {
+          path: "/clubs-societies",
+          name: "Clubs & Societies",
+          icon: <Users className="h-5 w-5" />,
+        },
+      ],
     },
     {
-      path: "/technical-events",
-      name: "Technical Events",
-      icon: <Code className="h-5 w-5" />,
+      section: "DATA & REPORTS",
+      items: [
+        {
+          path: "/placement-data",
+          name: "Placement Data",
+          icon: <Briefcase className="h-5 w-5" />,
+        },
+        {
+          path: "/events-data",
+          name: "Events Data",
+          icon: <Activity className="h-5 w-5" />,
+        },
+        {
+          path: "/placement-results",
+          name: "Placement Results",
+          icon: <FileText className="h-5 w-5" />,
+        },
+        {
+          path: "/event-results",
+          name: "Event Results",
+          icon: <FileText className="h-5 w-5" />,
+        },
+        {
+          path: "/society-membership",
+          name: "Society Membership",
+          icon: <Users className="h-5 w-5" />,
+        },
+        {
+          path: "/placement-report",
+          name: "Placement Report",
+          icon: <BarChart2 className="h-5 w-5" />,
+        },
+      ],
     },
   ];
 
@@ -79,19 +140,28 @@ const Sidebar = ({ isDarkMode, toggleDarkMode }) => {
 
       {/* Links */}
       <ul>
-        {links.map((link) => (
-          <li key={link.path} className="mb-3">
-            <Link
-              to={link.path}
-              className={`flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 transition-all ${
-                location.pathname.startsWith(link.path)
-                  ? "bg-blue-50 text-blue-700 font-semibold"
-                  : "text-gray-700"
-              } ${isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
-            >
-              {link.icon}
-              {!isCollapsed && <span>{link.name}</span>}
-            </Link>
+        {links.map((section) => (
+          <li key={section.section} className="mb-6">
+            {!isCollapsed && (
+              <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">
+                {section.section}
+              </h3>
+            )}
+            {section.items.map((link) => (
+              <li key={link.path} className="mb-3">
+                <Link
+                  to={link.path}
+                  className={`flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 transition-all ${
+                    location.pathname.startsWith(link.path)
+                      ? "bg-blue-50 text-blue-700 font-semibold"
+                      : "text-gray-700"
+                  } ${isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
+                >
+                  {link.icon}
+                  {!isCollapsed && <span>{link.name}</span>}
+                </Link>
+              </li>
+            ))}
           </li>
         ))}
       </ul>
