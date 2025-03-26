@@ -1,384 +1,303 @@
-import React, { useState, useEffect } from "react";
-import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-} from "recharts";
-import { Button } from "../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Download, ChevronDown, RefreshCw } from "lucide-react";
-import VisualizationSelector from "../components/VisualizationSelector";
-import {
-  fetchEventsGroupedByCategory,
-  fetchAchievementDistribution,
-  fetchEventsOverTime,
-  fetchFilteredEvents,
-} from "../utils/api";
+import { useState, useEffect } from "react"; 
+import { Bar, PieChart, Pie, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
+import { ChevronDown, RefreshCw } from "lucide-react";
 
 const TechnicalEvents = () => {
-  const [filters, setFilters] = useState({
-    department: "all",
-    fromYear: "all",
-    toYear: "all",
-    category: "all",
-  });
-  const [visualizationType, setVisualizationType] = useState("bar");
   const [eventData, setEventData] = useState([]);
   const [achievementData, setAchievementData] = useState([]);
-  const [eventsOverTime, setEventsOverTime] = useState([]);
-  const [filteredEvents, setFilteredEvents] = useState([]);
+  const [eventDetails, setEventDetails] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Define the arrays for dropdown options
-  const departments = [
-    { id: "all", name: "All Departments" },
-    { id: "cse", name: "Computer Science" },
-    { id: "ece", name: "Electronics" },
-    { id: "me", name: "Mechanical" },
-    { id: "ce", name: "Civil" },
-    { id: "pe", name: "Petroleum" },
-  ];
+  // Departments, years, and event types data
+  const departments = ["CSE", "ECE", "MECH", "EEE", "CHEM", "CIVIL"];
+  const years = Array.from({ length: 11 }, (_, i) => 2025 - i); // 2025 to 2015
+  const mainEventTypes = ["Hackathon", "Workshop", "Competition", "Technical Fest"];
+  const eventTypes = [...mainEventTypes, "Other"];
+  const [selectedYearFrom, setSelectedYearFrom] = useState("all");
+  const [selectedYearTo, setSelectedYearTo] = useState("all");
+  const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [selectedEventType, setSelectedEventType] = useState("all");
 
-  const years = Array.from({ length: 11 }, (_, i) => 2025 - i); // Generates years from 2025 to 2015
-  const eventTypes = [
-    { id: "all", name: "All Event Types" },
-    { id: "hackathon", name: "Hackathons" },
-    { id: "workshop", name: "Workshops" },
-    { id: "competition", name: "Competitions" },
-    { id: "techfest", name: "Technical Fest Tathva" },
-  ];
+  // Function to categorize event type
+  const categorizeEventType = (eventType) => {
+    return mainEventTypes.includes(eventType) ? eventType : "Other";
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        console.log("Fetching data with filters:", filters);
+    fetchData();
+  }, [selectedDepartment, selectedYearFrom, selectedYearTo, selectedEventType]);
 
-        // Fetch data based on filters
-        const groupedByCategory = await fetchEventsGroupedByCategory(filters);
-        const achievementDistribution = await fetchAchievementDistribution(filters);
-        const eventsOverTimeData = await fetchEventsOverTime(filters);
-        const filteredEventsData = await fetchFilteredEvents(filters);
-
-        console.log("Events by Category:", groupedByCategory);
-        console.log("Achievement Distribution:", achievementDistribution);
-        console.log("Events Over Time:", eventsOverTimeData);
-        console.log("Filtered Events:", filteredEventsData);
-
-        // Transform data into the correct format
-        const transformedEventData = Object.entries(groupedByCategory).map(([name, value]) => ({
-          name,
-          value,
-        }));
-
-        const transformedAchievementData = Object.entries(achievementDistribution).map(([name, value]) => ({
-          name,
-          value,
-        }));
-
-        const transformedEventsOverTime = Object.entries(eventsOverTimeData).map(([name, value]) => ({
-          name,
-          value,
-        }));
-
-        // Update state with transformed data
-        setEventData(transformedEventData);
-        setAchievementData(transformedAchievementData);
-        setEventsOverTime(transformedEventsOverTime);
-        setFilteredEvents(filteredEventsData);
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching data with filters:', {
+        department: selectedDepartment,
+        yearFrom: selectedYearFrom,
+        yearTo: selectedYearTo,
+        eventType: selectedEventType
+      });
+      
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      if (selectedDepartment !== 'all') {
+        queryParams.append('department', selectedDepartment);
       }
-    };
+      if (selectedYearFrom !== 'all') {
+        queryParams.append('startDate', `${selectedYearFrom}-01-01`);
+      }
+      if (selectedYearTo !== 'all') {
+        queryParams.append('endDate', `${selectedYearTo}-12-31`);
+      }
+      if (selectedEventType !== 'all') {
+        // If "Other" is selected, we need to handle it differently
+        if (selectedEventType === 'Other') {
+          // Add a parameter to indicate we want non-main categories
+          queryParams.append('category', 'Other');
+        } else {
+          queryParams.append('category', selectedEventType);
+        }
+        console.log('Adding category filter:', selectedEventType);
+      }
 
-    loadData();
-  }, [filters]); // Re-fetch data when filters change
+      // Log the full URL for debugging
+      console.log('API URL:', `http://localhost:8080/api/technical-events?${queryParams.toString()}`);
 
-  const handleFilterChange = (filterType, value) => {
-    console.log(`Filter changed: ${filterType} = ${value}`);
-    setFilters((prev) => ({ ...prev, [filterType]: value }));
+      // Fetch all events with filters
+      const eventsResponse = await fetch(`http://localhost:8080/api/technical-events?${queryParams.toString()}`);
+      if (!eventsResponse.ok) {
+        throw new Error(`HTTP error! status: ${eventsResponse.status}`);
+      }
+      const events = await eventsResponse.json();
+      console.log('Events fetched:', events);
+      
+      // Fetch category stats with filters
+      const categoryStatsResponse = await fetch(`http://localhost:8080/api/technical-events/stats/category?${queryParams.toString()}`);
+      if (!categoryStatsResponse.ok) {
+        throw new Error(`HTTP error! status: ${categoryStatsResponse.status}`);
+      }
+      const categoryStats = await categoryStatsResponse.json();
+      console.log('Category stats fetched:', categoryStats);
+      
+      // Fetch achievement stats with filters
+      const achievementStatsResponse = await fetch(`http://localhost:8080/api/technical-events/stats/achievement?${queryParams.toString()}`);
+      if (!achievementStatsResponse.ok) {
+        throw new Error(`HTTP error! status: ${achievementStatsResponse.status}`);
+      }
+      const achievementStats = await achievementStatsResponse.json();
+      console.log('Achievement stats fetched:', achievementStats);
+
+      // Transform data for charts
+      const categoryData = Object.entries(categoryStats).map(([name, value]) => ({
+        name: name === "Other" ? "Other" : name,
+        value
+      }));
+
+      const achievementData = Object.entries(achievementStats).map(([name, value]) => ({
+        name,
+        value
+      }));
+
+      // Log the transformed data
+      console.log('Transformed category data:', categoryData);
+      console.log('Transformed achievement data:', achievementData);
+
+      setEventData(categoryData);
+      setAchievementData(achievementData);
+      setEventDetails(events);
+      setError(null);
+    } catch (err) {
+      console.error('Detailed error:', err);
+      setError(`Failed to fetch data: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const resetFilters = () => {
-    setFilters({
-      department: "all",
-      fromYear: "all",
-      toYear: "all",
-      category: "all",
-    });
+  const handleResetFilters = () => {
+    setSelectedDepartment("all");
+    setSelectedYearFrom("all");
+    setSelectedYearTo("all");
+    setSelectedEventType("all");
   };
 
-  const COLORS = ["#f43f5e", "#8b5cf6", "#ec4899", "#6366f1", "#14b8a6", "#0ea5e9"];
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (error) return <div className="p-6 text-red-500">Error: {error}</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Technical Events Visualization</h1>
+
       {/* Filters Section */}
-      <Card className="shadow-sm">
-        <CardContent className="p-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Department Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Department</label>
-              <div className="relative">
-                <select
-                  className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                  value={filters.department}
-                  onChange={(e) => handleFilterChange("department", e.target.value)}
-                >
-                  <option value="all">All Departments</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
-              </div>
+      <div className="bg-white rounded-lg shadow p-4 my-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Department Filter */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Department</label>
+            <div className="relative">
+              <select 
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+                className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+              >
+                <option value="all">All Departments</option>
+                {departments.map((dept) => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
             </div>
+          </div>
 
-            {/* From Year Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">From Year</label>
+          {/* Year Range Filter */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Year Range</label>
+            <div className="grid grid-cols-2 gap-2">
               <div className="relative">
                 <select
+                  value={selectedYearFrom}
+                  onChange={(e) => setSelectedYearFrom(e.target.value)}
                   className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                  value={filters.fromYear}
-                  onChange={(e) => handleFilterChange("fromYear", e.target.value)}
                 >
-                  <option value="all">All Years</option>
+                  <option value="all">From</option>
                   {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
+                    <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
               </div>
-            </div>
 
-            {/* To Year Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">To Year</label>
               <div className="relative">
                 <select
+                  value={selectedYearTo}
+                  onChange={(e) => setSelectedYearTo(e.target.value)}
                   className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                  value={filters.toYear}
-                  onChange={(e) => handleFilterChange("toYear", e.target.value)}
                 >
-                  <option value="all">All Years</option>
+                  <option value="all">To</option>
                   {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
+                    <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Event Type Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Event Type</label>
-              <div className="relative">
-                <select
-                  className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                  value={filters.category}
-                  onChange={(e) => handleFilterChange("category", e.target.value)}
-                >
-                  <option value="all">All Event Types</option>
-                  {eventTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
               </div>
             </div>
           </div>
 
-          {/* Reset Filters Button */}
-          <div className="mt-4 flex justify-end">
-            <Button
-              variant="outline"
-              className="bg-white hover:bg-gray-100"
-              onClick={resetFilters}
+          {/* Event Type Filter */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Event Type</label>
+            <div className="relative">
+              <select 
+                value={selectedEventType}
+                onChange={(e) => setSelectedEventType(e.target.value)}
+                className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+              >
+                <option value="all">All Event Types</option>
+                {eventTypes.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Reset and Export Buttons */}
+          <div className="flex items-end">
+            <button
+              className="bg-gray-300 px-4 py-2 rounded-lg mr-2 flex items-center"
+              onClick={handleResetFilters}
             >
               <RefreshCw className="mr-2 h-4 w-4" />
               Reset Filters
-            </Button>
+            </button>
+            <button className="bg-blue-500 text-white px-4 py-2 rounded-lg">Export Data</button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Charts Section */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Events by Category</CardTitle>
-            <CardDescription>Distribution of technical events by category</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              {eventData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  {visualizationType === "bar" ? (
-                    <BarChart data={eventData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="value" fill="#007bff" />
-                    </BarChart>
-                  ) : (
-                    <PieChart>
-                      <Pie
-                        data={eventData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={120}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label
-                      >
-                        {eventData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  )}
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-gray-500">No data available</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Achievement Distribution</CardTitle>
-            <CardDescription>Student achievements in technical events</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              {achievementData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  {visualizationType === "bar" ? (
-                    <BarChart data={achievementData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="value" fill="#00C49F" />
-                    </BarChart>
-                  ) : (
-                    <PieChart>
-                      <Pie
-                        data={achievementData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={120}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label
-                      >
-                        {achievementData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  )}
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-gray-500">No data available</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        </div>
       </div>
 
-      {/* Line Chart Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Events Over Time</CardTitle>
-          <CardDescription>Trend of technical events by year</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80">
-            {eventsOverTime.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={eventsOverTime}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="value" stroke="#0ea5e9" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500">No data available</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-xl font-semibold">Events by Category</h2>
+          <Bar 
+            data={eventData} 
+            dataKey="value" 
+            fill="blue"
+            key="category-bar"
+          />
+        </div>
 
-      {/* Detailed Information Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Technical Events Data</CardTitle>
-          <CardDescription>Detailed information about technical events</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="border rounded-md">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50">
-                    <th className="py-3 px-4 text-left font-medium">Event Name</th>
-                    <th className="py-3 px-4 text-left font-medium">Host</th>
-                    <th className="py-3 px-4 text-left font-medium">Category</th>
-                    <th className="py-3 px-4 text-left font-medium">Achievement</th>
-                    <th className="py-3 px-4 text-left font-medium">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEvents.map((event, index) => (
-                    <tr key={index} className="border-t">
-                      <td className="py-3 px-4">{event.eventName}</td>
-                      <td className="py-3 px-4">{event.host}</td>
-                      <td className="py-3 px-4">{event.category}</td>
-                      <td className="py-3 px-4">{event.achievement}</td>
-                      <td className="py-3 px-4">{event.date}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-xl font-semibold">Achievement Distribution</h2>
+          <Bar 
+            data={achievementData} 
+            dataKey="value" 
+            fill="green"
+            key="achievement-bar"
+          />
+        </div>
+      </div>
+
+      {/* Additional Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-xl font-semibold">Event Distribution</h2>
+          <PieChart width={400} height={300}>
+            <Pie
+              data={eventData}
+              dataKey="value"
+              cx="50%"
+              cy="50%"
+              outerRadius={100}
+              fill="#8884d8"
+              label
+              key="category-pie"
+            />
+            <Tooltip key="category-tooltip" />
+          </PieChart>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-xl font-semibold">Achievement Trends</h2>
+          <LineChart width={400} height={300} data={achievementData}>
+            <CartesianGrid strokeDasharray="3 3" key="achievement-grid" />
+            <XAxis dataKey="name" key="achievement-xaxis" />
+            <YAxis key="achievement-yaxis" />
+            <Tooltip key="achievement-tooltip" />
+            <Legend key="achievement-legend" />
+            <Line 
+              type="monotone" 
+              dataKey="value" 
+              stroke="#82ca9d"
+              key="achievement-line"
+            />
+          </LineChart>
+        </div>
+      </div>
+
+      {/* Event Details Table */}
+      <div className="bg-white rounded-lg shadow p-4 mt-6">
+        <table className="w-full table-auto">
+          <thead>
+            <tr>
+              <th>Event Name</th>
+              <th>Host</th>
+              <th>Category</th>
+              <th>Achievement</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {eventDetails.map((event) => (
+              <tr key={event.id}>
+                <td>{event.eventName}</td>
+                <td>{event.host}</td>
+                <td>{event.category}</td>
+                <td>{event.achievement}</td>
+                <td>{event.date}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
