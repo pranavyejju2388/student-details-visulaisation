@@ -75,28 +75,32 @@ const SportsEvents = () => {
   });
   
   // Group data by sport category
-  const categoryData = categoryOptions.map(category => {
-    const count = filteredEvents.filter(event => 
-      event.category.toLowerCase().includes(category.value.toLowerCase())
-    ).length;
-    
-    return {
-      name: category.label,
-      count
-    };
-  });
+  const categoryData = categoryOptions
+    .filter(category => category.value !== "all") // Remove "All Categories" option
+    .map(category => {
+      const count = filteredEvents.filter(event => 
+        event.category.toLowerCase().includes(category.value.toLowerCase())
+      ).length;
+      
+      return {
+        name: category.label,
+        count
+      };
+    });
   
   // Group data by sport type
-  const typeData = typeOptions.map(type => {
-    const count = filteredEvents.filter(event => 
-      event.type.toLowerCase().includes(type.value.toLowerCase())
-    ).length;
-    
-    return {
-      name: type.label,
-      count
-    };
-  });
+  const typeData = typeOptions
+    .filter(type => type.value !== "all") // Remove "All Types" option
+    .map(type => {
+      const count = filteredEvents.filter(event => 
+        event.type.toLowerCase().includes(type.value.toLowerCase())
+      ).length;
+      
+      return {
+        name: type.label,
+        count
+      };
+    });
   
   return (
     <div className="space-y-6">
