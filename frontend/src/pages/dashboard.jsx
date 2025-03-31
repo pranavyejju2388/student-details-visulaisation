@@ -47,9 +47,79 @@ const Dashboard = () => {
 
   const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'];
 
+  // First, create a department mapping
+  const departmentMapping = {
+    "CSE": "Computer Science",
+    "ECE": "Electronics",
+    "MECH": "Mechanical",
+    "EEE": "Electrical",
+    "CHEM": "Chemical",
+    "CIVIL": "Civil"
+  };
+
+  // Update the filterData function
+  const filterData = (data, filters) => {
+    return data.filter(item => {
+      // Department filtering
+      const matchesDepartment = filters.department === "all" || item.department === filters.department;
+
+      // Year filtering - Fix the comparison
+      let matchesYearRange = true;
+      if (item.date && filters.fromYear !== "all" && filters.toYear !== "all") {
+        const itemYear = new Date(item.date).getFullYear();
+        const fromYear = parseInt(filters.fromYear);
+        const toYear = parseInt(filters.toYear);
+        matchesYearRange = itemYear >= fromYear && itemYear <= toYear;
+      } else if (filters.fromYear !== "all") {
+        const itemYear = new Date(item.date).getFullYear();
+        matchesYearRange = itemYear >= parseInt(filters.fromYear);
+      } else if (filters.toYear !== "all") {
+        const itemYear = new Date(item.date).getFullYear();
+        matchesYearRange = itemYear <= parseInt(filters.toYear);
+      }
+
+      // Company filtering
+      const matchesCompany = filters.company === "all" || item.company === filters.company;
+      
+      return matchesDepartment && matchesYearRange && matchesCompany;
+    });
+  };
+
+  // Apply filters to each dataset
+  const filteredTechnicalEvents = filterData(technicalEvents, filters);
+  const filteredCulturalEvents = filterData(culturalEvents, filters);
+  const filteredSportsEvents = filterData(sportsEvents, filters);
+  const filteredClubMemberships = filterData(clubMemberships, filters);
+
+  // Update the stats calculations to use filtered data
+  const totalTechnicalEvents = filteredTechnicalEvents.length;
+  const totalCulturalEvents = filteredCulturalEvents.length;
+  const totalSportsEvents = filteredSportsEvents.length;
+  const totalClubMemberships = filteredClubMemberships.length;
+
+  // Update activity category data with filtered counts
+  const activityCategoryData = [
+    { name: "Technical", value: totalTechnicalEvents },
+    { name: "Cultural", value: totalCulturalEvents },
+    { name: "Sports", value: totalSportsEvents },
+    { name: "Clubs", value: totalClubMemberships },
+  ];
+
+  // Update placement stats filtering
+  const filteredPlacementStats = {
+    ...placementStats,
+    placementsByDepartment: placementStats.placementsByDepartment.filter(stat => {
+      const matchesDepartment = filters.department === "all" || 
+        stat.department === departmentMapping[filters.department] ||
+        stat.department === filters.department;
+      
+      // Since placement stats don't have year, only filter by department
+      return matchesDepartment;
+    })
+  };
+
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    // In a real app, we would fetch data based on filters
   };
 
   const resetFilters = () => {
@@ -62,22 +132,15 @@ const Dashboard = () => {
     });
   };
 
-  // Calculate totals for each category
-  const totalTechnicalEvents = technicalEvents.length;
-  const totalCulturalEvents = culturalEvents.length;
-  const totalSportsEvents = sportsEvents.length;
-  const totalClubMemberships = clubMemberships.length;
-
-  // Student activity category data for chart
-  const activityCategoryData = [
-    { name: "Technical", value: totalTechnicalEvents },
-    { name: "Cultural", value: totalCulturalEvents },
-    { name: "Sports", value: totalSportsEvents },
-    { name: "Clubs", value: totalClubMemberships },
-  ];
-
   // Departments, years, and companies data
-  const departments = ["CSE", "ECE", "MECH", "EEE", "CHEM", "CIVIL"];
+  const departments = [
+    { value: "CSE", label: "Computer Science" },
+    { value: "ECE", label: "Electronics" },
+    { value: "MECH", label: "Mechanical" },
+    { value: "EEE", label: "Electrical" },
+    { value: "CHEM", label: "Chemical" },
+    { value: "CIVIL", label: "Civil" }
+  ];
   const years = Array.from({ length: 11 }, (_, i) => 2025 - i); // 2025 to 2015
   const companies = ["Salesforce", "DE Shaw", "Wells Fargo", "Oracle", "Google", "Microsoft"];
 
@@ -109,7 +172,7 @@ const Dashboard = () => {
                 >
                   <option value="all">All Departments</option>
                   {departments.map((dept) => (
-                    <option key={dept} value={dept}>{dept}</option>
+                    <option key={dept.value} value={dept.value}>{dept.label}</option>
                   ))}
                 </select>
                 <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
@@ -280,7 +343,7 @@ const Dashboard = () => {
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={placementStats.placementsByDepartment}
+                  data={filteredPlacementStats.placementsByDepartment}
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
