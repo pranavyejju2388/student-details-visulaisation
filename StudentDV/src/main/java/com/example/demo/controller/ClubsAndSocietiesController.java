@@ -1,63 +1,105 @@
 package com.example.demo.controller;
 
-import com.example.demo.repository.ClubMembershipRepository;
+import com.example.demo.entity.Club;
 import com.example.demo.repository.ClubRepository;
+import com.example.demo.repository.ClubMembershipRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/clubs")
-@CrossOrigin(origins = "*")
 public class ClubsAndSocietiesController {
 
-    private final ClubRepository clubRepository;
-    private final ClubMembershipRepository clubMembershipRepository;
+    @Autowired
+    private ClubRepository clubRepository;
 
     @Autowired
-    public ClubsAndSocietiesController(ClubRepository clubRepository, 
-                                     ClubMembershipRepository clubMembershipRepository) {
-        this.clubRepository = clubRepository;
-        this.clubMembershipRepository = clubMembershipRepository;
+    private ClubMembershipRepository membershipRepository;
+
+    @GetMapping
+    public ResponseEntity<List<Club>> getClubs(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String department) {
+        try {
+            List<Club> clubs;
+            
+            if (category != null && !category.isEmpty() && department != null && !department.isEmpty()) {
+                clubs = clubRepository.findByCategoryAndDepartment(category, department);
+            } else if (category != null && !category.isEmpty()) {
+                clubs = clubRepository.findByCategoryIgnoreCase(category);
+            } else if (department != null && !department.isEmpty()) {
+                clubs = clubRepository.findByDepartment(department);
+            } else {
+                clubs = clubRepository.findAll();
+            }
+            
+            // Initialize memberships
+            clubs.forEach(club -> {
+                if (club.getMemberships() != null) {
+                    club.getMemberships().size(); // Force initialization
+                }
+            });
+            
+            return ResponseEntity.ok(clubs != null ? clubs : List.of());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @GetMapping("/categories")
     public ResponseEntity<List<String>> getClubCategories() {
-        return ResponseEntity.ok(clubRepository.findDistinctCategories());
+        try {
+            List<String> categories = clubRepository.findDistinctCategories();
+            return ResponseEntity.ok(categories != null ? categories : List.of());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
-    @GetMapping("/category-stats")
-    public ResponseEntity<List<Map<String, Object>>> getCategoryStatistics() {
-        List<Object[]> results = clubRepository.countMembershipsByCategory();
-        return ResponseEntity.ok(results.stream()
-            .map(r -> Map.of("name", r[0], "count", r[1]))
-            .collect(Collectors.toList()));
+    @GetMapping("/memberships-by-category")
+    public ResponseEntity<List<Map<String, Object>>> getMembershipsByCategory(
+            @RequestParam(required = false) String department) {
+        try {
+            List<Object[]> results = clubRepository.countMembershipsByCategoryAndDepartment(department);
+            
+            List<Map<String, Object>> formattedResults = results.stream()
+                .map(result -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("name", result[0] != null ? result[0].toString() : "Unknown");
+                    map.put("count", result[1] != null ? ((Number) result[1]).longValue() : 0L);
+                    return map;
+                })
+                .collect(Collectors.toList());
+            return ResponseEntity.ok(formattedResults);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
-    @GetMapping("/position-stats")
-    public ResponseEntity<List<Map<String, Object>>> getPositionStatistics() {
-        List<Object[]> results = clubMembershipRepository.countByPosition();
-        return ResponseEntity.ok(results.stream()
-            .map(r -> Map.of("name", r[0], "value", r[1]))
-            .collect(Collectors.toList()));
-    }
-
-    @GetMapping("/memberships")
-    public ResponseEntity<List<com.example.demo.entity.ClubMembership>> filterMemberships(
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String department,
-            @RequestParam(required = false) String fromYear,
-            @RequestParam(required = false) String toYear) {
-        
-        LocalDate fromDate = fromYear != null ? LocalDate.of(Integer.parseInt(fromYear), 1, 1) : null;
-        LocalDate toDate = toYear != null ? LocalDate.of(Integer.parseInt(toYear), 12, 31) : null;
-        
-        return ResponseEntity.ok(clubMembershipRepository.filterMemberships(
-            category, department, fromDate, toDate));
+    @GetMapping("/memberships-by-position")
+    public ResponseEntity<List<Map<String, Object>>> getMembershipsByPosition(
+            @RequestParam(required = false) String department) {
+        try {
+            List<Object[]> results = department != null && !department.isEmpty() 
+                ? membershipRepository.countByRoleAndDepartment(department)
+                : membershipRepository.countByRole();
+            
+            List<Map<String, Object>> formattedResults = results.stream()
+                .map(result -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("name", result[0] != null ? result[0].toString() : "Unknown");
+                    map.put("value", result[1] != null ? ((Number) result[1]).longValue() : 0L);
+                    return map;
+                })
+                .collect(Collectors.toList());
+            return ResponseEntity.ok(formattedResults);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

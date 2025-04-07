@@ -4,18 +4,16 @@ import com.example.demo.model.CulturalEvent;
 import com.example.demo.repository.CulturalEventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/cultural-events")
-@Transactional
+@RequestMapping("/api/events")
+@CrossOrigin(origins = "*")
 public class CulturalEventController {
 
     private final CulturalEventRepository culturalEventRepository;
@@ -25,8 +23,8 @@ public class CulturalEventController {
         this.culturalEventRepository = culturalEventRepository;
     }
 
-    @GetMapping
-    public ResponseEntity<List<CulturalEvent>> getAllEvents() {
+    @GetMapping("/cultural")
+    public ResponseEntity<List<CulturalEvent>> getAllCulturalEvents() {
         return ResponseEntity.ok(culturalEventRepository.findAll());
     }
 
@@ -35,75 +33,67 @@ public class CulturalEventController {
         return ResponseEntity.ok(culturalEventRepository.findByCategory(type));
     }
 
-    @PostMapping
-    public ResponseEntity<CulturalEvent> createEvent(@RequestBody CulturalEvent culturalEvent) {
-        return ResponseEntity.ok(culturalEventRepository.save(culturalEvent));
-    }
-
-    @GetMapping("/filter")
-    public ResponseEntity<List<CulturalEvent>> filterEvents(
-            @RequestParam(required = false, defaultValue = "all") String department,
-            @RequestParam(required = false, defaultValue = "all") String category,
+    @GetMapping("/cultural/filter")
+    public ResponseEntity<List<CulturalEvent>> filterCulturalEvents(
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String category,
             @RequestParam(required = false) Integer fromYear,
             @RequestParam(required = false) Integer toYear) {
         
-        Date startDate = culturalEventRepository.parseYearToDate(fromYear, true);
-        Date endDate = culturalEventRepository.parseYearToDate(toYear, false);
+        Date startDate = fromYear != null ? culturalEventRepository.parseYearToDate(fromYear, true) : null;
+        Date endDate = toYear != null ? culturalEventRepository.parseYearToDate(toYear, false) : null;
         
         List<CulturalEvent> events;
         
-        if (!"all".equals(department) && !"all".equals(category)) {
-            events = culturalEventRepository.findByDepartmentAndCategoryAndDateBetween(department, category, startDate, endDate);
-        } else if (!"all".equals(department)) {
-            events = culturalEventRepository.findByDepartmentAndDateBetween(department, startDate, endDate);
-        } else if (!"all".equals(category)) {
-            events = culturalEventRepository.findByCategoryAndDateBetween(category, startDate, endDate);
-        } else {
+        if (department != null && category != null && startDate != null && endDate != null) {
+            events = culturalEventRepository.findByDepartmentAndCategoryAndDateBetween(
+                department, category, startDate, endDate);
+        } else if (department != null && startDate != null && endDate != null) {
+            events = culturalEventRepository.findByDepartmentAndDateBetween(
+                department, startDate, endDate);
+        } else if (category != null && startDate != null && endDate != null) {
+            events = culturalEventRepository.findByCategoryAndDateBetween(
+                category, startDate, endDate);
+        } else if (startDate != null && endDate != null) {
             events = culturalEventRepository.findByDateBetween(startDate, endDate);
+        } else if (department != null) {
+            events = culturalEventRepository.findByDepartment(department);
+        } else if (category != null) {
+            events = culturalEventRepository.findByCategory(category);
+        } else {
+            events = culturalEventRepository.findAll();
         }
         
         return ResponseEntity.ok(events);
     }
 
-    @GetMapping("/stats/category")
-    public ResponseEntity<Map<String, Object>> getCategoryStats() {
-        var stats = culturalEventRepository.getCategoryStatistics().stream()
+    @GetMapping("/cultural/stats/category")
+    public ResponseEntity<Map<String, Long>> getCategoryStats() {
+        Map<String, Long> stats = culturalEventRepository.getCategoryStatistics().stream()
             .collect(Collectors.toMap(
-                CulturalEventRepository.CategoryStats::getName,
-                CulturalEventRepository.CategoryStats::getCount
+                stat -> stat.getName(),
+                stat -> stat.getCount()
             ));
-        
-        return ResponseEntity.ok(Map.of(
-            "success", true,
-            "data", stats
-        ));
+        return ResponseEntity.ok(stats);
     }
 
-    @GetMapping("/stats/achievement")
-    public ResponseEntity<Map<String, Object>> getAchievementStats() {
-        var stats = culturalEventRepository.getAchievementStatistics().stream()
+    @GetMapping("/cultural/stats/achievement")
+    public ResponseEntity<Map<String, Long>> getAchievementStats() {
+        Map<String, Long> stats = culturalEventRepository.getAchievementStatistics().stream()
             .collect(Collectors.toMap(
-                CulturalEventRepository.AchievementStats::getName,
-                CulturalEventRepository.AchievementStats::getCount
+                stat -> stat.getName(),
+                stat -> stat.getCount()
             ));
-        
-        return ResponseEntity.ok(Map.of(
-            "success", true,
-            "data", stats
-        ));
+        return ResponseEntity.ok(stats);
     }
 
-  @GetMapping("/stats/yearly")
-public ResponseEntity<List<Map<String, Object>>> getYearlyEventStats() {
-    List<Map<String, Object>> stats = culturalEventRepository.getYearlyEventStatistics().stream()
-        .map(stat -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("year", stat.getYear());
-            map.put("events", stat.getCount());
-            return map;
-        })
-        .collect(Collectors.toList());
-    
-    return ResponseEntity.ok(stats);
-}
+    @GetMapping("/cultural/stats/yearly")
+    public ResponseEntity<List<CulturalEventRepository.YearlyEventStats>> getYearlyEventStats() {
+        return ResponseEntity.ok(culturalEventRepository.getYearlyEventStatistics());
+    }
+
+    public ResponseEntity<CulturalEvent> createCulturalEvent(CulturalEvent newEvent) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'createCulturalEvent'");
+    }
 }

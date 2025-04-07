@@ -12,6 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/placement-data")
+@CrossOrigin(origins = "*")
 public class PlacementDataController {
     
     private final PlacementDataRepository placementDataRepository;
@@ -22,42 +23,111 @@ public class PlacementDataController {
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<Map<String, Object>> getPlacementStats() {
+    public ResponseEntity<Map<String, Object>> getPlacementStats(
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) Integer fromYear,
+            @RequestParam(required = false) Integer toYear,
+            @RequestParam(required = false) String company,
+            @RequestParam(required = false) String groupBy) {
+        
         Map<String, Object> stats = new HashMap<>();
         
+        // Handle "all" values
+        Integer actualFromYear = fromYear != null ? fromYear : 0;
+        Integer actualToYear = toYear != null ? toYear : 9999;
+        
         // Total placements
-        Long totalPlacements = placementDataRepository.countTotalPlacements();
+        Long totalPlacements;
+        if (department != null && !"all".equals(department)) {
+            totalPlacements = placementDataRepository.countByDepartmentAndPassingYearBetween(
+                department, actualFromYear, actualToYear);
+        } else {
+            totalPlacements = placementDataRepository.countByPassingYearBetween(
+                actualFromYear, actualToYear);
+        }
         stats.put("totalPlacements", totalPlacements);
         
         // Average package
-        Double averagePackage = placementDataRepository.findAveragePackage();
+        Double averagePackage = placementDataRepository.findAveragePackageByFilters(
+            department, actualFromYear, actualToYear, company);
         stats.put("averagePackage", averagePackage != null ? averagePackage : 0);
         
         // Top company
-        Object[] topCompany = placementDataRepository.findTopHiringCompany();
+        Object[] topCompany = placementDataRepository.findTopHiringCompanyByFilters(
+            department, actualFromYear, actualToYear);
         stats.put("topCompany", topCompany != null && topCompany.length > 0 ? topCompany[0] : "N/A");
+        
+        // Grouped data if requested
+        if (groupBy != null) {
+            switch (groupBy.toLowerCase()) {
+                case "department":
+                    stats.put("groupedData", placementDataRepository.countByDepartmentAndPassingYearBetween(
+                        actualFromYear, actualToYear));
+                    break;
+                case "company":
+                    stats.put("groupedData", placementDataRepository.countByCompanyAndPassingYearBetween(
+                        actualFromYear, actualToYear));
+                    break;
+                case "year":
+                    stats.put("groupedData", placementDataRepository.countByYear());
+                    break;
+            }
+        }
         
         return ResponseEntity.ok(stats);
     }
 
     @GetMapping("/department-stats")
-    public ResponseEntity<List<Object[]>> getDepartmentStats() {
-        return ResponseEntity.ok(placementDataRepository.countByDepartment());
+    public ResponseEntity<List<Object[]>> getDepartmentStats(
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) Integer fromYear,
+            @RequestParam(required = false) Integer toYear,
+            @RequestParam(required = false) String company) {
+        
+        Integer actualFromYear = fromYear != null ? fromYear : 0;
+        Integer actualToYear = toYear != null ? toYear : 9999;
+        
+        List<Object[]> results;
+        if (department != null && !"all".equals(department)) {
+            results = placementDataRepository.countByDepartmentFiltered(
+                department, actualFromYear, actualToYear, company);
+        } else {
+            results = placementDataRepository.countByDepartmentAndPassingYearBetween(
+                actualFromYear, actualToYear);
+        }
+        
+        return ResponseEntity.ok(results);
     }
 
     @GetMapping("/yearly-stats")
-    public ResponseEntity<List<Object[]>> getYearlyStats() {
-        return ResponseEntity.ok(placementDataRepository.countByYear());
+    public ResponseEntity<List<Object[]>> getYearlyStats(
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) Integer fromYear,
+            @RequestParam(required = false) Integer toYear,
+            @RequestParam(required = false) String company) {
+        
+        Integer actualFromYear = fromYear != null ? fromYear : 0;
+        Integer actualToYear = toYear != null ? toYear : 9999;
+        
+        List<Object[]> results;
+        if (department != null && !"all".equals(department)) {
+            results = placementDataRepository.countByYearFiltered(
+                department, actualFromYear, actualToYear, company);
+        } else {
+            results = placementDataRepository.countByYear();
+        }
+        
+        return ResponseEntity.ok(results);
     }
 
-    @GetMapping
+    @GetMapping("/filter-placements")
     public ResponseEntity<List<PlacementData>> filterPlacements(
             @RequestParam(required = false, defaultValue = "all") String department,
             @RequestParam(required = false) Integer fromYear,
             @RequestParam(required = false) Integer toYear,
-            @RequestParam(required = false, defaultValue = "all") String company) {
+            @RequestParam(required = false, defaultValue = "all") String company,
+            @RequestParam(required = false, defaultValue = "100") int limit) {
         
-        // Handle "all" values
         Integer actualFromYear = fromYear != null ? fromYear : 0;
         Integer actualToYear = toYear != null ? toYear : 9999;
         
@@ -77,11 +147,11 @@ public class PlacementDataController {
                 actualFromYear, actualToYear);
         }
         
-        return ResponseEntity.ok(results);
+        return ResponseEntity.ok(results.stream().limit(limit).toList());
     }
 
-    @PostMapping
-    public ResponseEntity<PlacementData> createPlacement(@RequestBody PlacementData placementData) {
-        return ResponseEntity.ok(placementDataRepository.save(placementData));
+    @GetMapping("/companies")
+    public ResponseEntity<List<String>> getAllCompanies() {
+        return ResponseEntity.ok(placementDataRepository.findAllCompanies());
     }
 }

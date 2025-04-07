@@ -11,15 +11,19 @@ import java.util.List;
 @Repository
 public interface CulturalEventRepository extends JpaRepository<CulturalEvent, Long> {
 
-    // Filter methods
-    List<CulturalEvent> findByDepartmentAndCategoryAndDateBetween(String department, String category, Date startDate, Date endDate);
+    // Basic filter methods
+    List<CulturalEvent> findByDepartment(String department);
+    List<CulturalEvent> findByCategory(String category);
+    
+    // Date range filter methods
     List<CulturalEvent> findByDepartmentAndDateBetween(String department, Date startDate, Date endDate);
     List<CulturalEvent> findByCategoryAndDateBetween(String category, Date startDate, Date endDate);
     List<CulturalEvent> findByDateBetween(Date startDate, Date endDate);
     
-    // Get all cultural events
-    List<CulturalEvent> findByCategory(String category);
-    
+    // Combined filter method
+    List<CulturalEvent> findByDepartmentAndCategoryAndDateBetween(
+        String department, String category, Date startDate, Date endDate);
+
     // Statistics queries
     @Query("SELECT e.category AS name, COUNT(e) AS count FROM CulturalEvent e GROUP BY e.category")
     List<CategoryStats> getCategoryStatistics();
@@ -30,6 +34,7 @@ public interface CulturalEventRepository extends JpaRepository<CulturalEvent, Lo
     @Query("SELECT YEAR(e.date) AS year, COUNT(e) AS count FROM CulturalEvent e GROUP BY YEAR(e.date) ORDER BY year")
     List<YearlyEventStats> getYearlyEventStatistics();
     
+    // Result interfaces for statistics
     interface CategoryStats {
         String getName();
         Long getCount();
@@ -45,6 +50,7 @@ public interface CulturalEventRepository extends JpaRepository<CulturalEvent, Lo
         Long getCount();
     }
 
+    // Utility method for date conversion
     default Date parseYearToDate(Integer year, boolean isStartDate) {
         if (year == null || year == 0) {
             return isStartDate ? new Date(0) : new Date(Long.MAX_VALUE);
