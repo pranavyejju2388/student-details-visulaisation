@@ -20,7 +20,9 @@ public class ClubMembership {
     private Club club;
 
     private LocalDate joinDate;
-    private String role;  // Changed from 'position' to 'role' to match query
+    
+    @Column(name = "role")
+    private String role;
 
     // Getters and setters
     public Long getId() { return id; }

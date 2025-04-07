@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   BarChart, 
   Bar, 
@@ -10,98 +10,135 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  Legend 
+  Legend,
+  LineChart,
+  Line
 } from "recharts";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Download, ChevronDown, RefreshCw } from "lucide-react";
-import VisualizationSelector from "../components/VisualizationSelector";
-import { clubMemberships, clubCategories } from "../utils/data";
+import { Download, ChevronDown, RefreshCw, Loader2 } from "lucide-react";
+import axios from "axios";
 
-const ClubsAndSocieties = () => {
+const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#0ea5e9', '#14b8a6'];
+
+const CulturalEvents = () => {
   const [filters, setFilters] = useState({
     department: "all",
     fromYear: "all",
     toYear: "all",
-    category: "all",
+    category: "all"
   });
+  const [culturalEvents, setCulturalEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [visualizationType, setVisualizationType] = useState("bar");
-  
-  // Define filter options
-  const departments = [
-    { id: "all", name: "All Departments" },
-    { id: "cse", name: "Computer Science" },
-    { id: "ece", name: "Electronics" },
-    { id: "me", name: "Mechanical" },
-    { id: "ce", name: "Civil" },
-    { id: "pe", name: "Petroleum" },
-  ];
 
-  const years = Array.from({ length: 11 }, (_, i) => 2025 - i); // Generates years from 2025 to 2015
-  const clubTypes = [
-    { id: "all", name: "All Categories" },
-    { id: "cultural", name: "Cultural Club" },
-    { id: "technical", name: "Technical Club" },
-    { id: "hometeam", name: "Hometeam" },
-    { id: "society", name: "Society" },
-    { id: "other", name: "Other" }
-  ];
+  // Departments and years for filters
+  const departments = ["all", "CSE", "ECE", "MECH", "EEE", "CHEM", "CIVIL"];
+  const years = Array.from({ length: 11 }, (_, i) => 2025 - i); // 2025 to 2015
+  const categories = ["all", "Music", "Dance", "Drama", "Art", "Literature"];
 
-  const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#0ea5e9', '#14b8a6'];
-  
+  const fetchCulturalEvents = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { department, fromYear, toYear, category } = filters;
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (department !== "all") params.append("department", department);
+      if (category !== "all") params.append("category", category);
+      if (fromYear !== "all") params.append("fromYear", fromYear);
+      if (toYear !== "all") params.append("toYear", toYear);
+
+      const response = await axios.get(
+        `http://localhost:8080/api/events/cultural/filter?${params.toString()}`
+      );
+      setCulturalEvents(response.data);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+      console.error("Error fetching cultural events:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCulturalEvents();
+  }, [filters]);
+
   const handleFilterChange = (filterType, value) => {
     setFilters(prev => ({ ...prev, [filterType]: value }));
   };
-  
+
   const resetFilters = () => {
     setFilters({
       department: "all",
       fromYear: "all",
       toYear: "all",
-      category: "all",
+      category: "all"
     });
   };
 
-  // Filter data based on current filters
-  const filteredMemberships = clubMemberships.filter(member => {
-    return (
-      (filters.department === "all" || member.department === filters.department) &&
-      (filters.fromYear === "all" || parseInt(member.startYear) >= parseInt(filters.fromYear)) &&
-      (filters.toYear === "all" || parseInt(member.endYear) <= parseInt(filters.toYear)) &&
-      (filters.category === "all" || member.category.toLowerCase() === filters.category.toLowerCase())
-    );
-  });
+  // Prepare data for charts
+  const categoryData = culturalEvents.reduce((acc, event) => {
+    const existing = acc.find(item => item.name === event.category);
+    if (existing) {
+      existing.count++;
+    } else {
+      acc.push({ name: event.category, count: 1 });
+    }
+    return acc;
+  }, []);
 
-  // Group data by club category
-  const categoryData = clubCategories.map(category => {
-    const count = filteredMemberships.filter(club => 
-      club.category.toLowerCase().includes(category.name.toLowerCase())
-    ).length;
-    
-    return {
-      name: category.name,
-      count
-    };
-  }).filter(item => item.count > 0);
-  
-  // Group data by position
-  const positionData = [
-    { name: "President", value: filteredMemberships.filter(club => club.position === "President").length },
-    { name: "Secretary", value: filteredMemberships.filter(club => club.position === "Secretary").length },
-    { name: "Technical Lead", value: filteredMemberships.filter(club => club.position === "Technical Lead").length },
-    { name: "Member", value: filteredMemberships.filter(club => club.position === "Member").length },
-    { name: "Other", value: filteredMemberships.filter(club => 
-      club.position !== "President" && 
-      club.position !== "Secretary" && 
-      club.position !== "Technical Lead" && 
-      club.position !== "Member"
-    ).length },
-  ].filter(item => item.value > 0);
-  
+  const achievementData = culturalEvents.reduce((acc, event) => {
+    const existing = acc.find(item => item.name === event.achievement);
+    if (existing) {
+      existing.count++;
+    } else {
+      acc.push({ name: event.achievement, count: 1 });
+    }
+    return acc;
+  }, []);
+
+  const yearlyData = culturalEvents.reduce((acc, event) => {
+    const year = new Date(event.date).getFullYear();
+    const existing = acc.find(item => item.year === year);
+    if (existing) {
+      existing.events++;
+    } else {
+      acc.push({ year, events: 1 });
+    }
+    return acc;
+  }, []).sort((a, b) => a.year - b.year);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <span className="ml-2">Loading cultural events...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-red-500 text-center p-4 max-w-md">
+          <h2 className="text-xl font-bold mb-2">Error loading data</h2>
+          <p>{error}</p>
+          <Button className="mt-4" onClick={fetchCulturalEvents}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Clubs and Societies Visualization</h1>
+        <h1 className="text-2xl font-bold">Cultural Events Visualization</h1>
         <Button variant="outline">
           <Download className="mr-2 h-4 w-4" />
           Export Data
@@ -121,9 +158,9 @@ const ClubsAndSocieties = () => {
                   value={filters.department}
                   onChange={(e) => handleFilterChange("department", e.target.value)}
                 >
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name}
+                  {departments.map(dept => (
+                    <option key={dept} value={dept}>
+                      {dept === "all" ? "All Departments" : dept}
                     </option>
                   ))}
                 </select>
@@ -141,10 +178,8 @@ const ClubsAndSocieties = () => {
                   onChange={(e) => handleFilterChange("fromYear", e.target.value)}
                 >
                   <option value="all">All Years</option>
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
+                  {years.map(year => (
+                    <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
                 <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
@@ -161,28 +196,26 @@ const ClubsAndSocieties = () => {
                   onChange={(e) => handleFilterChange("toYear", e.target.value)}
                 >
                   <option value="all">All Years</option>
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
+                  {years.map(year => (
+                    <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
                 <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
               </div>
             </div>
 
-            {/* Club Type Filter */}
+            {/* Category Filter */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Club Type</label>
+              <label className="text-sm font-medium text-gray-700">Category</label>
               <div className="relative">
                 <select
                   className="w-full p-2 pr-8 border border-gray-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   value={filters.category}
                   onChange={(e) => handleFilterChange("category", e.target.value)}
                 >
-                  {clubTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>
+                      {cat === "all" ? "All Categories" : cat}
                     </option>
                   ))}
                 </select>
@@ -191,7 +224,6 @@ const ClubsAndSocieties = () => {
             </div>
           </div>
 
-          {/* Reset Filters Button */}
           <div className="mt-4 flex justify-end">
             <Button
               variant="outline"
@@ -204,38 +236,29 @@ const ClubsAndSocieties = () => {
           </div>
         </CardContent>
       </Card>
-      
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Membership Statistics</h2>
-        <VisualizationSelector 
-          onSelect={setVisualizationType}
-          defaultType={visualizationType}
-        />
-      </div>
-      
+
+      {/* Charts Section */}
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Events by Category */}
         <Card>
           <CardHeader>
-            <CardTitle>Membership by Category</CardTitle>
-            <CardDescription>Distribution of club memberships by category</CardDescription>
+            <CardTitle>Events by Category</CardTitle>
+            <CardDescription>Distribution of cultural events by category</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">
               {categoryData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   {visualizationType === "bar" ? (
-                    <BarChart
-                      data={categoryData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
+                    <BarChart data={categoryData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                      <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
                       <Legend />
                       <Bar 
                         dataKey="count" 
-                        name="Memberships" 
+                        name="Events" 
                         fill="#8b5cf6" 
                         radius={[4, 4, 0, 0]}
                       />
@@ -246,55 +269,49 @@ const ClubsAndSocieties = () => {
                         data={categoryData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={80}
                         outerRadius={120}
-                        fill="#8884d8"
-                        paddingAngle={2}
                         dataKey="count"
                         nameKey="name"
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        labelLine={false}
                       >
                         {categoryData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => [`${value} memberships`, 'Count']} />
+                      <Tooltip formatter={(value) => [`${value} events`, 'Count']} />
                       <Legend />
                     </PieChart>
                   )}
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full">
-                  <p className="text-gray-500">No data available for selected filters</p>
+                  <p className="text-gray-500">No data available</p>
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
-        
+
+        {/* Achievements Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>Membership by Position</CardTitle>
-            <CardDescription>Distribution of positions held by students</CardDescription>
+            <CardTitle>Achievements Distribution</CardTitle>
+            <CardDescription>Student achievements in cultural events</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">
-              {positionData.length > 0 ? (
+              {achievementData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   {visualizationType === "bar" ? (
-                    <BarChart
-                      data={positionData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
+                    <BarChart data={achievementData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                      <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
                       <Legend />
                       <Bar 
-                        dataKey="value" 
-                        name="Students" 
+                        dataKey="count" 
+                        name="Achievements" 
                         fill="#10b981" 
                         radius={[4, 4, 0, 0]}
                       />
@@ -302,68 +319,109 @@ const ClubsAndSocieties = () => {
                   ) : (
                     <PieChart>
                       <Pie
-                        data={positionData}
+                        data={achievementData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={80}
                         outerRadius={120}
-                        fill="#8884d8"
-                        paddingAngle={2}
-                        dataKey="value"
+                        dataKey="count"
                         nameKey="name"
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        labelLine={false}
                       >
-                        {positionData.map((entry, index) => (
+                        {achievementData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => [`${value} students`, 'Count']} />
+                      <Tooltip formatter={(value) => [`${value} achievements`, 'Count']} />
                       <Legend />
                     </PieChart>
                   )}
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full">
-                  <p className="text-gray-500">No data available for selected filters</p>
+                  <p className="text-gray-500">No data available</p>
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
       </div>
-      
+
+      {/* Events Over Time */}
       <Card>
         <CardHeader>
-          <CardTitle>Clubs & Societies Membership Data</CardTitle>
-          <CardDescription>Detailed information about club and society memberships</CardDescription>
+          <CardTitle>Events Over Time</CardTitle>
+          <CardDescription>Trend of cultural events by year</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-md">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50">
-                    <th className="py-3 px-4 text-left font-medium">Club Name</th>
-                    <th className="py-3 px-4 text-left font-medium">Position</th>
-                    <th className="py-3 px-4 text-left font-medium">Category</th>
-                    <th className="py-3 px-4 text-left font-medium">Start Date</th>
-                    <th className="py-3 px-4 text-left font-medium">End Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMemberships.map((club) => (
-                    <tr key={club.id} className="border-t">
-                      <td className="py-3 px-4">{club.clubName}</td>
-                      <td className="py-3 px-4">{club.position}</td>
-                      <td className="py-3 px-4">{club.category}</td>
-                      <td className="py-3 px-4">{club.startDate}</td>
-                      <td className="py-3 px-4">{club.endDate}</td>
+          <div className="h-80">
+            {yearlyData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={yearlyData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="year" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="events" 
+                    stroke="#0ea5e9" 
+                    strokeWidth={2}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500">No data available</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Events Data Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cultural Events Data</CardTitle>
+          <CardDescription>Detailed information about cultural events</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-md overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted/50">
+                  <th className="py-3 px-4 text-left">Event Name</th>
+                  <th className="py-3 px-4 text-left">Host</th>
+                  <th className="py-3 px-4 text-left">Department</th>
+                  <th className="py-3 px-4 text-left">Category</th>
+                  <th className="py-3 px-4 text-left">Achievement</th>
+                  <th className="py-3 px-4 text-left">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {culturalEvents.length > 0 ? (
+                  culturalEvents.map(event => (
+                    <tr key={event.id} className="border-t hover:bg-gray-50">
+                      <td className="py-3 px-4">{event.eventName}</td>
+                      <td className="py-3 px-4">{event.host}</td>
+                      <td className="py-3 px-4">{event.department}</td>
+                      <td className="py-3 px-4">{event.category}</td>
+                      <td className="py-3 px-4">{event.achievement}</td>
+                      <td className="py-3 px-4">
+                        {new Date(event.date).toLocaleDateString()}
+                      </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="py-4 text-center text-gray-500">
+                      No events found matching filters
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>
@@ -371,4 +429,4 @@ const ClubsAndSocieties = () => {
   );
 };
 
-export default ClubsAndSocieties;
+export default CulturalEvents;

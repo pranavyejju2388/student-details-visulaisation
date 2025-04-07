@@ -1,9 +1,7 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Download, 
   Search, 
-  Filter, 
   ChevronLeft, 
   ChevronRight, 
   FileSpreadsheet 
@@ -33,61 +31,106 @@ import {
 } from "../components/ui/dropdown-menu";
 import { Card } from "../components/ui/card";
 import FilterSection from "../components/FilterSection";
-import { students } from '../utils/data';
-
+import axios from 'axios';
 
 const PlacementReport = () => {
   const [filters, setFilters] = useState({
     department: "all",
-    year: "all",
-    company: "all"
+    fromYear: "all",
+    toYear: "all",
+    category: "all"
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [perPage, setPerPage] = useState("10");
   const [currentPage, setCurrentPage] = useState(1);
+  const [reports, setReports] = useState([]);
+  const [totalReports, setTotalReports] = useState(0);
+  const [departments, setDepartments] = useState([]);
+  const [years, setYears] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   
-  const filteredStudents = students.filter((student) => {
-    // In a real app, we would apply actual filters
-    // For demo, just filter by search term
-    if (searchQuery.trim() === "") return true;
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      try {
+        const [deptsRes, yearsRes, catsRes] = await Promise.all([
+          axios.get('http://localhost:8080/api/placement-reports/departments'),
+          axios.get('http://localhost:8080/api/placement-reports/years'),
+          axios.get('http://localhost:8080/api/placement-reports/categories')
+        ]);
+        
+        setDepartments(deptsRes.data);
+        setYears(yearsRes.data);
+        setCategories(catsRes.data);
+      } catch (error) {
+        console.error("Error fetching filter options:", error);
+      }
+    };
     
-    return (
-      student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.company.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  });
+    fetchFilterOptions();
+  }, []);
   
-  const pageSize = parseInt(perPage);
-  const totalPages = Math.ceil(filteredStudents.length / pageSize);
-  
-  const paginatedStudents = filteredStudents.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  useEffect(() => {
+    const fetchReports = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get('http://localhost:8080/api/placement-reports', {
+          params: {
+            search: searchQuery,
+            department: filters.department === "all" ? "" : filters.department,
+            fromYear: filters.fromYear === "all" ? "" : filters.fromYear,
+            toYear: filters.toYear === "all" ? "" : filters.toYear,
+            category: filters.category === "all" ? "" : filters.category,
+            page: currentPage - 1,
+            size: perPage
+          }
+        });
+        
+        setReports(response.data.content);
+        setTotalReports(response.data.totalElements);
+      } catch (error) {
+        console.error("Error fetching placement reports:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchReports();
+  }, [filters, searchQuery, currentPage, perPage]);
   
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   };
   
-  const handleExport = (format) => {
-    alert(`Exporting data as ${format}`);
-    // In a real app, this would trigger an export process
+  const handleExport = async (format) => {
+    try {
+      const response = await axios.post(
+        'http://localhost:8080/api/placement-reports/export', 
+        null,
+        { params: { format } }
+      );
+      alert(response.data);
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Export failed. Please try again.");
+    }
   };
   
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case "Placed":
-        return "status-badge status-placed";
+        return "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs";
       case "Pending":
-        return "status-badge status-pending";
+        return "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs";
       case "In Progress":
-        return "status-badge status-progress";
+        return "bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs";
       default:
-        return "status-badge";
+        return "bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs";
     }
   };
+  
+  const totalPages = Math.ceil(totalReports / parseInt(perPage));
   
   return (
     <div className="space-y-6">
@@ -119,7 +162,12 @@ const PlacementReport = () => {
       
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
-          <FilterSection onFilterChange={handleFilterChange} />
+          <FilterSection 
+            departments={departments}
+            years={years}
+            categories={categories}
+            onFilterChange={handleFilterChange} 
+          />
         </div>
         
         <Card className="table-container lg:col-span-2">
@@ -145,31 +193,37 @@ const PlacementReport = () => {
                   <TableHead>Company</TableHead>
                   <TableHead>Position</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Package</TableHead>
+                  <TableHead>Package (kPA)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedStudents.map((student) => (
-                  <TableRow key={student.id} className="animate-fade-in">
-                    <TableCell className="font-medium">{student.name}</TableCell>
-                    <TableCell>{student.department}</TableCell>
-                    <TableCell>{student.company}</TableCell>
-                    <TableCell>{student.position}</TableCell>
-                    <TableCell>
-                      <span className={getStatusBadgeClass(student.status)}>
-                        {student.status}
-                      </span>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      Loading...
                     </TableCell>
-                    <TableCell>{student.package}</TableCell>
                   </TableRow>
-                ))}
-                
-                {paginatedStudents.length === 0 && (
+                ) : reports.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No students found matching your criteria
+                      No placement records found matching your criteria
                     </TableCell>
                   </TableRow>
+                ) : (
+                  reports.map((report) => (
+                    <TableRow key={report.id}>
+                      <TableCell className="font-medium">{report.studentName}</TableCell>
+                      <TableCell>{report.department}</TableCell>
+                      <TableCell>{report.company}</TableCell>
+                      <TableCell>{report.position}</TableCell>
+                      <TableCell>
+                        <span className={getStatusBadgeClass(report.status)}>
+                          {report.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>{report.packageAmount} kPA</TableCell>
+                    </TableRow>
+                  ))
                 )}
               </TableBody>
             </Table>
@@ -178,7 +232,10 @@ const PlacementReport = () => {
           <div className="flex items-center justify-between p-4 border-t border-border">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Rows per page</span>
-              <Select value={perPage} onValueChange={setPerPage}>
+              <Select value={perPage} onValueChange={(value) => {
+                setPerPage(value);
+                setCurrentPage(1);
+              }}>
                 <SelectTrigger className="w-16 h-8">
                   <SelectValue placeholder="10" />
                 </SelectTrigger>
@@ -191,9 +248,9 @@ const PlacementReport = () => {
               </Select>
               
               <span className="text-sm text-muted-foreground ml-4">
-                Showing {(currentPage - 1) * pageSize + 1} to{" "}
-                {Math.min(currentPage * pageSize, filteredStudents.length)} of{" "}
-                {filteredStudents.length} entries
+                Showing {(currentPage - 1) * parseInt(perPage) + 1} to{" "}
+                {Math.min(currentPage * parseInt(perPage), totalReports)} of{" "}
+                {totalReports} entries
               </span>
             </div>
             
@@ -211,7 +268,7 @@ const PlacementReport = () => {
                 variant="outline"
                 size="icon"
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || totalPages === 0}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
